@@ -20,31 +20,9 @@ Here is the help program help message, when run with `-h` or `--help`. Please no
 
 # Configuration
 
-Copy `godir.cfg.default` to `godir.cfg`. Then edit the file to modify user options.
+The default godir config file is a (TOML)[https://github.com/toml-lang/toml] file.
 
-You can also specify some settings on the command line - try using the `-h` flag.
-Here are some settings for you to modify.
-
-
-
-EXCLUDES => Add in here the file/directory names you do NOT want to be indexed by the program.
-
-ROOTDIR => If you don't want to specify the working directory as a command line argument, uncomment it from the config.
-
-DIRFILENAME => Change the default name of the file from "index.html"
-
-DOMAIN => Set this to the domain name for your site.
-
-ALPHAORDER => Set to true if you want files/folders to be sorted alphabetically in the listings.
-
-FOLLOWSYMLINKS => Set to true to have the program follow symbolic links.
-
-ALLOW_OUT_OF_WEBROOT => Set to false to restrict symlink destinations to only within the `WEBROOT`
-
-WEBROOT => Where to restrict symlinks to. Used in conjunction with `ALLOW_OUT_OF_WEBROOT`
-
-LOGLEVEL => What kinds of messages do you want logged. Levels are -1 for none, 0 for info, 1 for warning, 2 for errors, 3 for verbose.
-
+By default godir looks in `$HOME/.config/godir/config.toml`, but you may specify another TOML file to use with the `-c` flag. You can find a sample config file in `src/config.toml.example`.
 
 ### These settings are for wizards only (or for those who are willing to read through the code)
 ITEMTEMPLATE = open("<filename>").read()  => Set <filename> to the path of whatever file you want to use as the template for individual items in the listing.
