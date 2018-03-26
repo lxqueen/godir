@@ -18,6 +18,7 @@ func main() {
   }
   // *** Argparse Stuff *** //
 
+  // var := flag.Type("flag", default, "Desc")
   verbose := flag.Bool("v", false, "Verbose: Make the program give more detailed output.")
   version := flag.Bool("V", false, "Version: Get program version and some extra info.")
   quiet   := flag.Bool("q",false, "Quiet: Decrease Logging Levels to Warning+")
@@ -25,7 +26,7 @@ func main() {
   force   := flag.Bool("F", false, "Force: Force-regenerate all directories, even if no changes have been made.")
   webroot := flag.String("w", "", "Webroot: Specify a webroot to jail symlinks to.")
   unjail   := flag.Bool("u", false, "Unjail: Use to remove the restriction jailing symlink destinations to the webroot.")
-  filename   := flag.String("f", "", "File: Manually set the name of the HTML file containing the directory listing.")
+  filename   := flag.String("f", "index.html", "File: Manually set the name of the HTML file containing the directory listing.")
   sort   := flag.Bool("s", false, "Sort: Sort directory entries alphabetically.")
   outFile   := flag.String("o", "", "lOgfile: Path to a text file to write program output to (file will be overwritten!). Use along with -qq to output to file and not stdout.")
 
@@ -54,7 +55,7 @@ func main() {
   if (err != nil) {
     console.Error("indexOf failed with error: " + err.Error())
   }
-  remove(tail, index)
+  tail = remove(tail, index)
 
   // ** End Set up tail *** //
 
@@ -73,7 +74,7 @@ func main() {
     fmt.Printf("Sort %t\n", *sort)
     fmt.Printf("oFile %q\n", *outFile)
     fmt.Printf("workPath %q\n", workPath)
-    fmt.Printf("tail: %q\n", flag.Args())
+    fmt.Printf("tail: %q\n", tail)
   }
 
   // *** END Debug Mode Sanity Output *** //
