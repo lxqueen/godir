@@ -7,11 +7,15 @@ import (
 )
 
 func main() {
-  fmt.Printf("") // We are alive!
 
-  Ver := "0.1.0"  // Version
+  Ver := "0.1.2"  // Version
   Rev := "a"      // Revision (how many times has this version been committed to fix bugs.)
 
+  // Just exit with a message if we're running with no arguments.
+  if(len(os.Args) < 2) {
+    fmt.Println("No arguments supplied. Use the `-h` flag for help.")
+    os.Exit(0)
+  }
   // *** Argparse Stuff *** //
 
   verbose := flag.Bool("v", false, "Verbose: Make the program give more detailed output.")
@@ -25,21 +29,7 @@ func main() {
   sort   := flag.Bool("s", false, "Sort: Sort directory entries alphabetically.")
   outFile   := flag.String("o", "", "lOgfile: Path to a text file to write program output to (file will be overwritten!). Use along with -qq to output to file and not stdout.")
 
-
-  // Once all flags are declared, call `flag.Parse()`
   flag.Parse()
-
-  // Here we'll just dump out the parsed options and
-  // any trailing positional arguments. Note that we
-  // need to dereference the pointers with e.g. `*wordPtr`
-  // to get the actual option values.
-  /*
-  fmt.Println("word:", *wordPtr)
-  fmt.Println("numb:", *numbPtr)
-  fmt.Println("fork:", *boolPtr)
-  fmt.Println("svar:", svar)
-  fmt.Println("tail:", flag.Args())
-  */
 
   // --version output
   if ( *version ) {
@@ -54,8 +44,19 @@ func main() {
 
   // func Logger(level int, sendILogs bool, quiet bool, oFile string) *_logger
   console := Logger(2, *verbose, *quiet, *outFile)
-
   // *** END Logger Config *** //
+
+  // *** Set up tail *** //
+
+  tail := flag.Args()
+  workPath := tail[0]
+  index, err := indexOf(tail, workPath)
+  if (err != nil) {
+    console.Error("indexOf failed with error: " + err.Error())
+  }
+  remove(tail, index)
+
+  // ** End Set up tail *** //
 
   // *** Debug Mode Sanity Output *** //
 
@@ -71,7 +72,11 @@ func main() {
     fmt.Printf("Filename %q\n", *filename)
     fmt.Printf("Sort %t\n", *sort)
     fmt.Printf("oFile %q\n", *outFile)
+    fmt.Printf("workPath %q\n", workPath)
     fmt.Printf("tail: %q\n", flag.Args())
   }
+
   // *** END Debug Mode Sanity Output *** //
+
+
 }
