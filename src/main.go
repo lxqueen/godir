@@ -63,9 +63,20 @@ func main() {
     data, err = json.Marshal(config)
     if err != nil { console.Error(err.Error()) }
     fmt.Printf("%s\n", data)
+
+    console.Log("Loaded args and configs in " + time.Since(start).String() + "\n")
   }
 
+  console.Ilog("Loading template files into memory.")
+
+  // Goroutines to load these, since they may be large.
+  // Channels
+  chanTheme := make( chan FileAsyncOutput )
+  chanSearch := make( chan FileAsyncOutput )
+  chanItem := make( chan FileAsyncOutput )
+
+  themeIn := <- chanTheme
 
   // Program end.
-  fmt.Printf("Done. Took %s\n", time.Since(start))
+  console.Log("Done. Took " + time.Since(start).String() + "\n")
 }
