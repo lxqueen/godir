@@ -5,7 +5,7 @@ import (
     "fmt"
     "os"
     "time"
-    _"gopkg.in/cheggaaa/pb.v1" // Used later
+    "gopkg.in/cheggaaa/pb.v1" // Used later
 )
 
 func main() {
@@ -63,12 +63,12 @@ func main() {
     fmt.Printf("tail: %q\n", args.Tail)
     */
     data, err := json.Marshal(args)
-    if err != nil { console.Error(err.Error()) }
+    if err != nil { console.Fatal(err.Error()) }
     fmt.Printf("%s\n", data)
 
     console.Ilog("\nThe following configuration options were loaded from " + *args.ConfigFile + ":")
     data, err = json.Marshal(config)
-    if err != nil { console.Error(err.Error()) }
+    if err != nil { console.Fatal(err.Error()) }
     fmt.Printf("%s\n", data)
 
     console.Log("Loaded args and configs in " + time.Since(start).String())
@@ -97,21 +97,21 @@ func main() {
   // Receive, then verify, each template file.
   themeOut := <- chanTheme
   if (themeOut.Err != nil) {
-    console.Error(themeOut.Err.Error())
+    console.Fatal(themeOut.Err.Error())
   }
   themeRaw := themeOut.Data
 
 
   searchOut := <- chanSearch
   if (searchOut.Err != nil) {
-    console.Error(searchOut.Err.Error())
+    console.Fatal(searchOut.Err.Error())
   }
   searchRaw := searchOut.Data
 
 
   itemOut := <- chanItem
   if (itemOut.Err != nil) {
-    console.Error(itemOut.Err.Error())
+    console.Fatal(itemOut.Err.Error())
   }
   itemRaw := itemOut.Data
 
@@ -130,9 +130,21 @@ func main() {
 
   // Change directory into workpath.
   // Loop through workpath and count how much we have to process.
-  memberCount := DirTreeCount(args.WorkPath)
-  fmt.Println("memberCount: " + string(memberCount))
+
+  // The async function is insanely fast.
+  console.Log("Counting objects...")
+  timer = time.Now()
+  outChan := make(chan int)
+  go DirTreeCountAsync(args.WorkPath, outChan)
+  memberCount := <- outChan
+  console.Log("Found ", memberCount, " objects in ", time.Since(timer))
+
+  // Set up the bar itself, now that we know how much we need to do.
+  //bar := pb.New(memberCount)
+
+  // Use this to start the bar: //bar.Start()
+  // Use barIncrement() to increase the bar
 
   // Program end.
-  console.Log("Done. Took " + time.Since(start).String())
+  console.Log("Done. Took ", time.Since(start))
 }

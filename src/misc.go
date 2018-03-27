@@ -106,19 +106,32 @@ func DirTreeCount(path string) int {
   return counter
 }
 
-/* NOT WORKING
-func DirTreeCountAsync(path string, container *int) {
+func DirTreeCountAsync(path string, out chan int) {
   files,_ := ioutil.ReadDir(path)
+  count := 0
+  subdirs := 0
+  // First count the amount of subdirectories.
+  for _, f := range files {
+    if (f.IsDir()) { subdirs++ }
+  }
+
+  // Make a child channel that holds an amount of ints equal to the amount of subdirectories.
+  childChan := make(chan int, subdirs)
 
   // Now actually delve into subdirs recursively
   for _, f := range files {
       if (f.IsDir()) {
-        go DirTreeCountAsync(path + "/" + f.Name(), container)
+        go DirTreeCountAsync(path + "/" + f.Name(), childChan)
       }
-      *container += 1
+      count++
   }
+
+  // Now sum all elements in the channel to get the total subdirs count.
+  for i := 0; i < subdirs; i++ {
+		count += <- childChan
+	}
+  out <- count
 }
-*/
 
 func Hash(data []byte) string {
   h := xxhash.New64()

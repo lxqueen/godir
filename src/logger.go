@@ -35,37 +35,65 @@ func Logger(level int, sendILogs bool, quiet bool, oFile string) *LogObject {
 }
 
 // Standard log level
-func (d *LogObject) Log(msg string) {
+func (d *LogObject) Log(msgs ...interface{}) {
   if ((d.Lv >= 0) && (d.Silent == false)) { // Only trigger if logging is enabled.
-    fmt.Printf("[LOG][%s] %s\n", time.Now().Format("3:04 PM"), msg)
+    d.Prefix("LOG")
+    for _, msg := range msgs {
+      fmt.Printf("%+v", msg)
+    }
+    fmt.Printf("\n")
   }
 }
 
-func (d *LogObject) Warn(msg string) {
+func (d *LogObject) Warn(msgs ...interface{}) {
   if ((d.Lv >= 1) && (d.Silent == false)) { // Only trigger if logging is enabled.
-    fmt.Printf("[WARN][%s] %s\n", time.Now().Format("3:04 PM"), msg)
+    d.Prefix("WARN")
+    for _, msg := range msgs {
+      fmt.Printf("%+v", msg)
+    }
+    fmt.Printf("\n")
   }
 }
 
-func (d *LogObject) Error(msg string) {
+func (d *LogObject) Error(msgs ...interface{}) {
   if ((d.Lv >= 2) && (d.Silent == false)) { // Only trigger if logging is enabled.
-    fmt.Printf("[ERROR][%s] %s\n", time.Now().Format("3:04 PM"), msg)
+    d.Prefix("ERR")
+    for _, msg := range msgs {
+      fmt.Printf("%+v", msg)
+    }
+    fmt.Printf("\n")
   }
 }
 
 // Fatal error. Always prints and exits 1.
-func (d *LogObject) Fatal(msg string) {
-  fmt.Printf("[FATAL][%s] %s\n", time.Now().Format("3:04 PM"), msg)
+func (d *LogObject) Fatal(msgs ...interface{}) {
+  d.Prefix("FATAL")
+  for _, msg := range msgs {
+    fmt.Printf("%+v", msg)
+  }
+  fmt.Printf("\n")
   os.Exit(1)
 }
 
 // Does not exit 1 afterwards. This should not be used, instead, use [ERROR].
-func (d *LogObject) Fatals(msg string) {
-  fmt.Printf("[FATAL][%s] %s\n", time.Now().Format("3:04 PM"), msg)
+func (d *LogObject) Fatals(msgs ...interface{}) {
+  d.Prefix("FATAL")
+  for _, msg := range msgs {
+    fmt.Printf("%+v", msg)
+  }
+  fmt.Printf("\n")
 }
 
-func (d *LogObject) Ilog(msg string) {
+func (d *LogObject) Ilog(msgs ...interface{}) {
   if ((d.Lv >= 3) || (d.EnableILogs == true)) { // Only trigger if internal (super debug) is enabled.
-    fmt.Printf("[IL][%s] %s\n", time.Now().Format("3:04 PM"), msg)
+    d.Prefix("IL")
+    for _, msg := range msgs {
+      fmt.Printf("%+v", msg)
+    }
+    fmt.Printf("\n")
   }
+}
+
+func (d *LogObject) Prefix(bracket string) {
+  fmt.Printf("[%s][%s] ", bracket, time.Now().Format("3:04 PM") )
 }
