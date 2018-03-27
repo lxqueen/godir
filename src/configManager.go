@@ -39,7 +39,7 @@ type Arguments struct {
   Tail      []string
 }
 
-// Reads info from config file
+// Reads info from config file.
 func ReadConfig(path string) Config {
 	_, err := os.Stat(path)
 	if err != nil {
@@ -56,6 +56,7 @@ func ReadConfig(path string) Config {
 	return conf
 }
 
+// Args has to be set before config, as the latter relies on the former.
 func ReadArgs() Arguments {
   args := Arguments{}
 
