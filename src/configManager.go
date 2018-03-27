@@ -12,6 +12,7 @@ type Config struct {
   SearchTemplate string
   ItemTemplate   string
   Include_path   string
+
   Tag_contents   string
   Tag_class      string
   Tag_file_href  string
@@ -21,6 +22,13 @@ type Config struct {
   Tag_root_dir   string
   Tag_sidenav    string
   Tag_breadcrumb string
+  Tag_filename   string
+  Tag_last_modified string
+  Tag_filesize   string
+
+  Follow_symlinks bool
+  Excludes      []string
+  Domain        string
 }
 
 type Arguments struct {

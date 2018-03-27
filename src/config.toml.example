@@ -1,13 +1,40 @@
-ThemeTemplate = "./rsc/themeTemplate.html"
-SearchTemplate = "./rsc/searchTemplate.html"
-ItemTemplate = "./rsc/itemTemplate.html"
-Include_path = "./rsc/includes"
-Tag_contents = "$content$"
-Tag_class = "$class$"
-Tag_file_href = "$file-href$"
-Tag_item_type = "$item-type$"
-Tag_root_step = "$root-step$"
-Tag_domain = "$domain$"
-Tag_root_dir = "$root-dir$"
-Tag_sidenav = "$side-nav$"
-Tag_breadcrumb = "$breadcrumb"
+# Theme template paths. These must be modified appropriately.
+themeTemplate  = "./rsc/itemTemplate.html"
+searchTemplate = "./rsc/searchTemplate.html"
+itemTemplate   = "./rsc/themeTemplate.html"
+include_path   = "./rsc/include"
+
+# Change which tags godir will look for. If you're using a pre-made theme, leave these at their defaults.
+tag_contents   = "$content$"
+tag_class      = "$class$"
+tag_file_href  = "$file-href$"
+tag_item_type  = "$item-type$"
+tag_root_step  = "$root-step$"
+tag_domain     = "$domain$"
+tag_root_dir   = "$root-dir$"
+tag_sidenav    = "$sidenav$"
+tag_breadcrumb = "$breadcrumb$"
+tag_filename   = "$filename$"
+tag_last_modified = "$last-modified$"
+tag_filesize   = "$filesize$"
+
+# Should godir follow symlinks? This may cause security issues.
+follow_symlinks = false
+
+# These files will be completely ignored by godir.
+# The defaults include godir-generated files and directories and should probably not be touched.
+excludes = [
+    "lib",
+    "app.py",
+    "rsc",
+    ".git",
+    "include",
+    "index.html",
+    "directory.html",
+    "search.html",
+    ".git",
+    "dir.idx"
+]
+
+
+domain = "localhost" # Set this to your domain name.

@@ -5,6 +5,7 @@ import (
     "fmt"
     "os"
     "time"
+    _"gopkg.in/cheggaaa/pb.v1" // Used later
 )
 
 func main() {
@@ -21,6 +22,12 @@ func main() {
     fmt.Println("No arguments supplied. Use the `-h` flag for help.")
     os.Exit(0)
   }
+
+  /*
+
+  ARGUMENT PARSING AND DEBUG OUTPUT
+
+  */
 
   // Load the args.
   args := ReadArgs()
@@ -64,8 +71,14 @@ func main() {
     if err != nil { console.Error(err.Error()) }
     fmt.Printf("%s\n", data)
 
-    console.Log("Loaded args and configs in " + time.Since(start).String() + "\n")
+    console.Log("Loaded args and configs in " + time.Since(start).String())
   }
+
+  /*
+
+  LOAD TEMPLATE FILES
+
+  */
 
   console.Ilog("Loading template files into memory.")
 
@@ -75,8 +88,51 @@ func main() {
   chanSearch := make( chan FileAsyncOutput )
   chanItem := make( chan FileAsyncOutput )
 
-  themeIn := <- chanTheme
+  timer := time.Now() // Timer
+
+  go LoadFileAsync(config.ThemeTemplate, chanTheme)
+  go LoadFileAsync(config.SearchTemplate, chanSearch)
+  go LoadFileAsync(config.ItemTemplate, chanItem)
+
+  // Receive, then verify, each template file.
+  themeOut := <- chanTheme
+  if (themeOut.Err != nil) {
+    console.Error(themeOut.Err.Error())
+  }
+  themeRaw := themeOut.Data
+
+
+  searchOut := <- chanSearch
+  if (searchOut.Err != nil) {
+    console.Error(searchOut.Err.Error())
+  }
+  searchRaw := searchOut.Data
+
+
+  itemOut := <- chanItem
+  if (itemOut.Err != nil) {
+    console.Error(itemOut.Err.Error())
+  }
+  itemRaw := itemOut.Data
+
+  console.Log("Loaded 3 template files in " + time.Since(timer).String())
+
+  console.Ilog("Theme file sum: " + Hash([]byte(themeRaw)))
+  console.Ilog("Search file sum: " + Hash([]byte(searchRaw)))
+  console.Ilog("Item file sum: " + Hash([]byte(itemRaw)))
+
+
+  /*
+
+  CREATE PROGRESS BAR
+
+  */
+
+  // Change directory into workpath.
+  // Loop through workpath and count how much we have to process.
+  memberCount := DirTreeCount(args.WorkPath)
+  fmt.Println("memberCount: " + string(memberCount))
 
   // Program end.
-  console.Log("Done. Took " + time.Since(start).String() + "\n")
+  console.Log("Done. Took " + time.Since(start).String())
 }

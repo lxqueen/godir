@@ -14,7 +14,25 @@ It first will compile HTML for the folders, then takes file names and calculates
 `godir /path/to/root/working/directory`(Note no ending forward slash!) You may use `.` or any relative naming to describe the directory. Please note that the program will write files to the chosen directory. Also note that the `include` folder will be copied in its entirety to the root directory of the target.
 
 Here is the help program help message, when run with `-h` or `--help`. Please note that this *may* not be up to date at all times.
+
+Also note that windows users will always need to manually specify the `config.toml` file, because of the way home directories work on non-unix systems.
+
 ```
+Usage of ./godir:
+  godir -FVqsu -c ./config.toml -o logFile -f htmlFileName.html DIRTree
+  -F	Force: Force-regenerate all directories, even if no changes have been made.
+  -V	Version: Get program version and some extra info.
+  -c string
+    	Specify a file to use as the godir config. (default "/home/nsuarez19/.config/godir/config.toml")
+  -f string
+    	File: Manually set the name of the HTML file containing the directory listing. (default "index.html")
+  -o string
+    	lOgfile: Path to a text file to write program output to (file will be overwritten!). Use along with -qq to output to file and not stdout.
+  -q	Quiet: Decrease Logging Levels to Warning+
+  -qq
+    	Super Quiet: Makes the program not output to stdout, only displaying fatal errors.
+  -s	Sort: Sort directory entries alphabetically.
+  -u	Unjail: Use to remove the restriction jailing symlink destinations to the webroot.
 
 ```
 
@@ -22,15 +40,7 @@ Here is the help program help message, when run with `-h` or `--help`. Please no
 
 The default godir config file is a (TOML)[https://github.com/toml-lang/toml] file.
 
-By default godir looks in `$HOME/.config/godir/config.toml`, but you may specify another TOML file to use with the `-c` flag. You can find a sample config file in `src/config.toml.example`.
-
-### These settings are for wizards only (or for those who are willing to read through the code)
-ITEMTEMPLATE = open("<filename>").read()  => Set <filename> to the path of whatever file you want to use as the template for individual items in the listing.
-
-THEME = open("<filename>").read() => This is the template html for each page.
-
-SKIPDIRS => Should directories with no changes made since last run be skipped? Turn this off if pages aren't all updating properly.
-
+By default godir looks in `$HOME/.config/godir/config.toml`. You may specify another TOML file to use with the `-c` flag. You can find a sample config file in `src/config.toml.example`.
 
 # Performance
 No significant benchmarking has been done.

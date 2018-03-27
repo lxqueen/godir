@@ -4,7 +4,14 @@ import (
     "strings"
     "errors"
     "io/ioutil"
+    "os"
 )
+
+
+type FileAsyncOutput struct {
+  Data []byte
+  Err  error
+}
 
 // Literally just abstractions of the strings.replace method for readability.
 
@@ -19,33 +26,28 @@ func LoadFile(path string) ([]byte, error) {
 
   // check if file exists
   _, err := os.Stat(path)
-  if err != nil { return "", errors.New("File is missing: ", path) }
+  if err != nil { return []byte{}, errors.New("File is missing: " + path) }
 
   data, err := ioutil.ReadFile(path)
-  if err != nil { return "", err }
+  if err != nil { return []byte{}, err }
 
   return data, nil
 }
 
 
-type FileAsyncOutput struct {
-  data []byte
-  err  error
-}
-
 // Function to safely and abstractly load template files.
-func LoadFileAsync(path string, out chan FileAsyncOutput {
+func LoadFileAsync(path string, out chan FileAsyncOutput) {
 
   // check if file exists
   _, err := os.Stat(path)
   if err != nil {
-    out <- FileAsyncOutput{"", errors.New("File is missing: ", path)}
+    out <- FileAsyncOutput{ []byte{}, errors.New("File is missing: " + path)}
     return
   }
 
   data, err := ioutil.ReadFile(path)
   if err != nil {
-    out <- FileAsyncOutput{"", err}
+    out <- FileAsyncOutput{ []byte{}, err}
     return
   }
 
