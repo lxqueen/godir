@@ -36,15 +36,15 @@ func FileSizeCount(fileSize int64) string {
 }
 
 // Get the size of a given file or folder. https://stackoverflow.com/questions/32482673/golang-how-to-get-directory-total-size
-func DirSize(path string) (int64, error) {
+func DirSize(path string) int64 {
     var size int64
-    err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+    filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
         if !info.IsDir() {
             size += info.Size()
         }
         return  err
     })
-    return size, err
+    return size
 }
 
 func FileSize(path string) (int64, error) {
@@ -95,6 +95,7 @@ func DirTreeCount(path string) int {
   return counter
 }
 
+// Add excludes to this eventually
 func DirTreeCountAsync(path string, out chan int) {
   files,_ := ioutil.ReadDir(path)
   count := 0
@@ -126,6 +127,16 @@ func Hash(data []byte) string {
   h := xxhash.New64()
 	h.Write(data)
   return strconv.FormatUint(h.Sum64(), 16)
+}
+
+// https://stackoverflow.com/questions/15323767/does-golang-have-if-x-in-construct-similar-to-python
+func StringInSlice(a string, list []string) bool {
+    for _, b := range list {
+        if b == a {
+            return true
+        }
+    }
+    return false
 }
 
 /* https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
