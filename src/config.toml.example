@@ -1,7 +1,7 @@
 # Theme template paths. These must be modified appropriately.
-themeTemplate  = "./rsc/itemTemplate.html"
+themeTemplate  = "./rsc/themeTemplate.html"
 searchTemplate = "./rsc/searchTemplate.html"
-itemTemplate   = "./rsc/themeTemplate.html"
+itemTemplate   = "./rsc/itemTemplate.html"
 include_path   = "./rsc/include"
 
 # Change which tags godir will look for. If you're using a pre-made theme, leave these at their defaults.
