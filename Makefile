@@ -3,7 +3,7 @@ all:
 	@mkdir -p ./out
 	go get github.com/BurntSushi/toml
 	go get github.com/OneOfOne/xxhash
-	go get gopkg.in/cheggaaa/pb.v1
+	go get -u github.com/schollz/progressbar
 	go build -o "./out/godir" ./src/*.go
 	@echo "Done"
 
