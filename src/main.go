@@ -166,7 +166,7 @@ func main() {
 
 
   statChan := make(chan Status)
-  go GenerateAsync(".", statChan, GenOpts{ Conf: config, Args: args, ThemeTemplate: themeText, ItemTemplate: itemText } )
+  go GenerateAsync(".", *console, statChan, GenOpts{ Conf: config, Args: args, ThemeTemplate: themeText, ItemTemplate: itemText } )
 
   <- statChan // Wait for termination
 

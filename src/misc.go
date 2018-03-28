@@ -7,7 +7,13 @@ import (
   "io/ioutil"
   "path/filepath"
   "github.com/OneOfOne/xxhash"
+  "errors"
 )
+
+type FileAsyncOutput struct {
+  Data []byte
+  Err  error
+}
 
 // https://stackoverflow.com/questions/19101419/go-golang-formatfloat-convert-float-number-to-string
 func FloatToString(input_num float64) string {
@@ -138,6 +144,41 @@ func StringInSlice(a string, list []string) bool {
     }
     return false
 }
+
+// Function to safely and abstractly load template files.
+func LoadFile(path string) ([]byte, error) {
+
+  // check if file exists
+  _, err := os.Stat(path)
+  if err != nil { return []byte{}, err }
+
+  data, err := ioutil.ReadFile(path)
+  if err != nil { return []byte{}, err }
+
+  return data, nil
+}
+
+
+// Function to safely and abstractly load template files.
+func LoadFileAsync(path string, out chan FileAsyncOutput) {
+
+  // check if file exists
+  _, err := os.Stat(path)
+  if err != nil {
+    out <- FileAsyncOutput{ []byte{}, errors.New("File is missing: " + path)}
+    return
+  }
+
+  data, err := ioutil.ReadFile(path)
+  if err != nil {
+    out <- FileAsyncOutput{ []byte{}, err}
+    return
+  }
+
+  out <- FileAsyncOutput{data, nil}
+}
+
+
 
 /* https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
 func printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
