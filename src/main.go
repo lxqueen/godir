@@ -2,10 +2,9 @@ package main
 
 import (
     "encoding/json"
-    "fmt"
     "os"
     "time"
-    "gopkg.in/cheggaaa/pb.v1" // Used later
+    "fmt"
 )
 
 func main() {
@@ -132,19 +131,45 @@ func main() {
   // Loop through workpath and count how much we have to process.
 
   // The async function is insanely fast.
+  /*
   console.Log("Counting objects...")
   timer = time.Now()
   outChan := make(chan int)
   go DirTreeCountAsync(args.WorkPath, outChan)
   memberCount := <- outChan
   console.Log("Found ", memberCount, " objects in ", time.Since(timer))
+  */
 
-  // Set up the bar itself, now that we know how much we need to do.
-  //bar := pb.New(memberCount)
+  /*
+
+    MAIN PROGRAM START
+
+  */
+  console.Ilog("Performing static substitutions...")
+  themeText := SubTag(string(themeRaw), config.Tag_domain, config.Domain)
+  searchText := SubTag(string(searchRaw), config.Tag_domain, config.Domain)
+  itemText := SubTag(string(itemRaw), config.Tag_domain, config.Domain)
+  console.Ilog("Theme text sum: " + Hash([]byte(themeText)))
+  console.Ilog("Search text sum: " + Hash([]byte(searchText)))
+  console.Ilog("Item text sum: " + Hash([]byte(itemText)))
+
+
+
+  err := os.Chdir(args.WorkPath) // We are now in the workpath, and can use "." to refer to the current location.
+  if (err != nil) { console.Fatal(err.Error()) }
+
+  console.Log("Generating objects...")
+  timer = time.Now()
 
   // Use this to start the bar: //bar.Start()
   // Use barIncrement() to increase the bar
 
+
+  statChan := make(chan Status)
+  go GenerateAsync(".", statChan, GenOpts{ Conf: config, Args: args, ThemeTemplate: themeText, ItemTemplate: itemText } )
+
+  <- statChan // Wait for termination
+
   // Program end.
-  console.Log("Done. Took ", time.Since(start))
+  console.Log("Done. Took ", time.Since(timer), " (From launch: ", time.Since(start), ")")
 }
