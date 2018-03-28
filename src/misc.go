@@ -12,27 +12,16 @@ import (
 // https://stackoverflow.com/questions/19101419/go-golang-formatfloat-convert-float-number-to-string
 func FloatToString(input_num float64) string {
     // to convert a float number to a string
-    return strconv.FormatFloat(input_num, 'f', 6, 64)
+    return strconv.FormatFloat(input_num, 'f', 2, 64)
 }
 
-// Rounding function https://gist.github.com/DavidVaini/10308388
-func Round(val float64, places int ) (newVal float64) {
-	var round float64
-  roundOn := .5
-	pow := math.Pow(10, float64(places))
-	digit := pow * val
-	_, div := math.Modf(digit)
-	if div >= roundOn {
-		round = math.Ceil(digit)
-	} else {
-		round = math.Floor(digit)
-	}
-	newVal = round / pow
-	return
+// Rounding function https://stackoverflow.com/questions/39544571/golang-round-to-nearest-0-05
+func Round(x, unit float64) float64 {
+  return math.Round(x/unit) * unit
 }
 
 // Convert byte count to size string
-func FileSizeCount(fileSize int) string {
+func FileSizeCount(fileSize int64) string {
     if (fileSize >= 1000000000000) {
       return FloatToString(Round(float64(fileSize / 1000000000000), 2)) + " TB" // convert to terabytes
     } else if (fileSize >= 1000000000) {
@@ -42,7 +31,7 @@ func FileSizeCount(fileSize int) string {
     } else if (fileSize >= 1000) {
        return FloatToString(Round(float64(fileSize / 1000), 2)) + " KB" // convert to kb
     } else {
-      return string(fileSize) + " B"
+      return strconv.FormatInt(fileSize, 10) + ".00 B"
     }
 }
 
