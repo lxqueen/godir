@@ -5,6 +5,7 @@ import (
   "io/ioutil"
   "bytes"
   "strings"
+  "sync"
 )
 
 type GenOpts struct {
@@ -29,10 +30,9 @@ const (
 )
 
 // Recursive generate async.
-func GenerateAsync(path string, console LogObject, status chan Status, opts GenOpts) {
+func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, opts GenOpts) {
   console.Log("Generating for ", path)
   files,_ := ioutil.ReadDir(path)
-  subdirs := 0
 
   // Load dir.idx, and deserialize it into a filename:hash slice.
   // This way, if the name changes, it re generates, and if the contents change, it also regens.
@@ -78,34 +78,39 @@ func GenerateAsync(path string, console LogObject, status chan Status, opts GenO
   pageBuffer = SubTag(pageBuffer, opts.Conf.Tag_root_step, rootStep)
 
   // Make a child channel that holds an amount of ints equal to the amount of subdirectories.
-  childChan := make(chan Status, subdirs)
+  var childWG sync.WaitGroup
+  hasChildren := false // will be set to true if it spawns any child goroutines.
 
   // Now actually delve into subdirs recursively
   for _, f := range files {
-    file, exists := idx[f.Name()]
-    fd, err := LoadFile(path + "/" + f.Name())
-    if (err != nil) {
-      if (!f.IsDir()){
-        console.Error(err)
+    if ( !(StringInSlice(f.Name(), opts.Conf.Excludes)) ) { // if it's not in the excludes, then we can do stuff
+      console.Ilog("Checking File " + path + "/" + f.Name())
+      file, exists := idx[f.Name()]
+      fd, err := LoadFile(path + "/" + f.Name())
+      if (err != nil) {
+        if (!f.IsDir()){
+          console.Error(err)
+        }
       }
-    }
-    if ( (Hash(fd) == file.Hash) ) { // if it's unchanged...
-      itemBuffer.WriteString(file.Html)
-    } else { // if it doesn't match, it's been changed.
-      // We change exists to false because we know it exists,
-      // we just want to make sure the next if statement fires.
-      exists = false
-    }
+      if ( (Hash(fd) == file.Hash) ) { // if it's unchanged...
+        console.Ilog("File ", path + "/" + f.Name(), " unchanged, skipping...")
+        itemBuffer.WriteString(file.Html)
+      } else { // if it doesn't match, it's been changed.
+        // We change exists to false because we know it exists,
+        // we just want to make sure the next if statement fires.
+        console.Ilog("File ", path + "/" + f.Name(), " changed, generating...")
+        exists = false
+      }
 
-    if (!exists || *opts.Args.Force) { // if it doesn't exist or we're forcing...
-      if ( !(StringInSlice(f.Name(), opts.Conf.Excludes)) ) { // if it's not in the excludes...
+      if (!exists || *opts.Args.Force) { // if it doesn't exist or we're forcing...
         tmp = opts.ItemTemplate
         if (f.IsDir()) {
-          go GenerateAsync(path + "/" + f.Name(), console, childChan, opts)
-          subdirs++ // Keep track of how many subdir processes we are spawning
+          childWG.Add(1)
+          hasChildren = true
+          go GenerateAsync(path + "/" + f.Name(), console, &childWG, opts)
 
           tmp = SubTag(tmp, opts.Conf.Tag_class, "icon dir")
-          tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon file-dir")
+          tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon dir-icon")
           tmp = SubTag(tmp, opts.Conf.Tag_filesize, FileSizeCount(DirSize(path + "/" + f.Name())))
         } else { // else is file
           tmp = SubTag(tmp, opts.Conf.Tag_class, "icon file")
@@ -116,15 +121,14 @@ func GenerateAsync(path string, console LogObject, status chan Status, opts GenO
         // Now are the classes that are set regardless of dir/file
         tmp = SubTag(tmp, opts.Conf.Tag_filename, f.Name())
         tmp = SubTag(tmp, opts.Conf.Tag_last_modified, f.ModTime().Format("2006-01-02 15:04:05"))
-        tmp = SubTag(tmp, opts.Conf.Tag_file_href, path + "/" + f.Name())
+        tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + f.Name())
 
-        fileData, err := LoadFile(path + "/" + f.Name())
+        fileData, err := LoadFile( path + "/" + f.Name())
         if (err != nil) { console.Error(err) }
         idx[f.Name()] = ObjData{ Hash: Hash(fileData), Html: tmp } // Re-set the appropriate fields, since we've changed something.
         itemBuffer.WriteString(tmp)
       }
     }
-
   }
   pageBuffer = SubTag(pageBuffer, opts.Conf.Tag_contents, itemBuffer.String()) // Actually sub into page.
 
@@ -138,10 +142,10 @@ func GenerateAsync(path string, console LogObject, status chan Status, opts GenO
   err = ioutil.WriteFile(path + "/dir.idx", data, 0644)
 
   // Wait for all the sub-dirs to finish executing before returning yourself.
-  for i := 0; i < subdirs; i++ {
-		<- childChan
-	}
-  status <- QUIT
+  if (hasChildren) {
+    childWG.Wait()
+  }
+  wg.Done()
 }
 
 

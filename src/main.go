@@ -172,10 +172,11 @@ func main() {
   // Use barIncrement() to increase the bar
 
 
-  statChan := make(chan Status)
-  go GenerateAsync(".", *console, statChan, GenOpts{ Conf: config, Args: args, ThemeTemplate: themeText, ItemTemplate: itemText } )
+  var wg sync.WaitGroup
+  wg.Add(1)
+  go GenerateAsync(".", *console, &wg, GenOpts{ Conf: config, Args: args, ThemeTemplate: themeText, ItemTemplate: itemText } )
 
-  <- statChan // Wait for termination
+  wg.Wait() // wait for completion.
 
   // Program end.
   console.Log("Done. Took ", time.Since(timer), " (From launch: ", time.Since(start), ")")
