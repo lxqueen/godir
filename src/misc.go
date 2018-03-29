@@ -178,7 +178,20 @@ func LoadFileAsync(path string, out chan FileAsyncOutput) {
   out <- FileAsyncOutput{data, nil}
 }
 
+func AppendFile(filename string, data []byte) error {
+  f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
+  if (err != nil) {
+    return err
+  }
 
+  defer f.Close()
+
+  _, err = f.WriteString(string(data))
+  if (err != nil) {
+    return err
+  }
+  return nil
+}
 
 /* https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
 func printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):

@@ -65,6 +65,7 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, opts GenO
   for _, file := range files {
     if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
       tmp := opts.ItemTemplate
+      fileRec := map[string]interface{}{}
       if ( file.IsDir() ) { // if it's a directory...
 
         // Add one to the waitgroup, and start the goroutine for that subdir.
@@ -103,6 +104,23 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, opts GenO
         } else {
           itemBuffer.WriteString(idx[file.Name()].Html) // If it hasn't changed, and we're not forcing, just use the existing html.
         }
+
+        // Add in record for file searching.
+        fileRec["size"] = FileSizeCount(file.Size())
+        fileRec["path"] = path + "/" + file.Name()
+        fileRec["lastmodified"] = file.ModTime().Format("2006-01-02 15:04:05")
+        fileRec["name"] = file.Name()
+
+        console.Ilog("Marshalling ", file.Name(), " to include/files.json")
+        jdata, err := json.Marshal(fileRec)
+        if (err != nil) {
+          console.Fatal(err)
+        }
+        err = AppendFile("./include/files.json", append([]byte(", "), jdata...) )
+        if (err != nil) {
+          console.Fatal(err)
+        }
+
       } // END if/else IsDir()
     } // END if ( !(StringInSlice(f.Name(), opts.Conf.Excludes) ) )
   } // END for _, file := range files
@@ -133,13 +151,14 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, opts GenO
 func GenRootStep(path string) string {
   split := strings.Split(path, "/")
   if (len(split) <= 1) {
-    return "./"
+    return "."
   } else {
     var step bytes.Buffer
+    step.WriteString(".")
     for i := 0; i < (len(split)-1); i++ {
-  		step.WriteString("../")
+  		step.WriteString("/..")
   	}
-    return strings.TrimRight(step.String(), "/")
+    return step.String()
   }
 }
 

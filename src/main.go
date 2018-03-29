@@ -8,6 +8,7 @@ import (
     "github.com/otiai10/copy"
     "sync"
     "io/ioutil"
+    "strings"
 )
 
 func main() {
@@ -178,12 +179,26 @@ func main() {
   // Use this to start the bar: //bar.Start()
   // Use barIncrement() to increase the bar
 
+  // Create the files.json file in includes/
+  err = ioutil.WriteFile("./include/files.json", []byte("var jsonText = '["), 0644)
+  if (err != nil) {
+    console.Fatal(err)
+  }
 
   var wg sync.WaitGroup
   wg.Add(1)
   go GenerateAsync(".", *console, &wg, GenOpts{ Conf: config, Args: args, ThemeTemplate: themeText, ItemTemplate: itemText } )
 
   wg.Wait() // wait for completion.
+
+  // Add a closing quote to file to make valid JS/JSON
+  AppendFile("./include/files.json", []byte("]'"))
+
+  // Now sanitize the JSON.
+  filesJSON, err := ioutil.ReadFile("./include/files.json")
+  if (err != nil) { console.Fatal(err.Error()) }
+  filesJSON = []byte(strings.Replace(string(filesJSON), ", ", "", 1))
+  err = ioutil.WriteFile("./include/files.json", []byte(filesJSON), 0644)
 
   // Program end.
   console.Log("Done. Took ", time.Since(timer), " (From launch: ", time.Since(start), ")")

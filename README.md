@@ -2,9 +2,13 @@
 
 ## Generate static HTML pages for directory listings.
 
-This program will scan a given directory and all it contains, recursively, and within each of those directories (including the root) create a directory listing HTML page that not only looks nice but is completely static, removing the need for often bandwidth-intensive client-side handlers. Not only that, but it also has support for custom styles, so no more of those ugly default Apache directory listings.
+This program will scan a given directory and all it contains, recursively, and within each of those directories (including the root) create a directory listing HTML page that not only looks nice but is completely static - removing the need for often bandwidth-intensive client-side handlers. Not only that, but it also has support for custom styles, so no more of those ugly default Apache directory listings.
 
-It first will compile HTML for the folders, then takes file names and calculates file sizes for their listings. It lists in alphabetical order by default.
+It first will compile HTML for the folders, then takes file names and calculates file sizes for their listings.
+
+# Compatibility
+
+This program is a golang rewrite of [pydir](https://github.com/montessquio/pydir)
 
 # Requirements
  - GO compiler and tools.
@@ -19,15 +23,15 @@ Also note that windows users will always need to manually specify the `config.to
 
 ```
 Usage of ./godir:
-  godir -FVqsu -c ./config.toml -o logFile -f htmlFileName.html DIRTree
+  godir WorkPath
+
+Additional Arguments:
   -F	Force: Force-regenerate all directories, even if no changes have been made.
   -V	Version: Get program version and some extra info.
   -c string
-    	Specify a file to use as the godir config. (default "/home/nsuarez19/.config/godir/config.toml")
+    	Specify a file to use as the godir config. (default "$HOME/.config/godir/config.toml")
   -f string
     	File: Manually set the name of the HTML file containing the directory listing. (default "index.html")
-  -o string
-    	lOgfile: Path to a text file to write program output to (file will be overwritten!). Use along with -qq to output to file and not stdout.
   -q	Quiet: Decrease Logging Levels to Warning+
   -qq
     	Super Quiet: Makes the program not output to stdout, only displaying fatal errors.
@@ -38,12 +42,18 @@ Usage of ./godir:
 
 # Configuration
 
+Godir is configured in two places: in `config.toml` (below) and using command line options (above).
+
+
 The default godir config file is a (TOML)[https://github.com/toml-lang/toml] file.
 
-By default godir looks in `$HOME/.config/godir/config.toml`. You may specify another TOML file to use with the `-c` flag. You can find a sample config file in `src/config.toml.example`.
+By default godir looks in `$HOME/.config/godir/config.toml`. You may specify a different TOML file to use with the `-c` flag. You can find a sample config file in `src/config.toml.example`.
 
 # Performance
-No significant benchmarking has been done.
+Godir has been found to be 650 times faster than Pydir (when tested on very large file trees.)
+
+Benchmarking has shown godir to be able to completely generate for a ~250gb (200,000 files) tree in just under 15 seconds.
+Please note these numbers may change depending on the nature, distribution, and size of your filesystem.
 
 # Search
 Search is reasonably fast, and since it uses [lunr.js](https://lunrjs.com) it supports wildcards (`*`) and boosts (`^x`), which allow you to prioritize certain parts of the search by `x` times.
