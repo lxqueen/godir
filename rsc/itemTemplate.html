@@ -1,8 +1,6 @@
-<div style="padding: 5px; margin: 5px; border: 2px solid black;">
-  <p>Class: $class$</p>
-  <p>Href: <a href="$file-href$">$file-href$</p>
-  <p>Item-Type: $item-type$</p>
-  <p>Filename: $filename$</p>
-  <p>Last-Modified: $last-modified$</p>
-  <p>Filesize: $filesize$</p>
-</div>
+<tr class="$class$ listing-item" onclick="window.location.href='$file-href$'">
+  <td class="$item-type$"></td>
+  <td><a class="$class$ file-name" draggable="true" href="$file-href$">$filename$</a></td>
+  <td><small class="text-muted">$last-modified$</small></td>
+  <td><small class="file-size text-muted">$filesize$</small></td>
+</tr>
