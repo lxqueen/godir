@@ -5,6 +5,8 @@ import (
     "os"
     "time"
     "fmt"
+    "github.com/otiai10/copy"
+    "sync"
 )
 
 func main() {
@@ -154,8 +156,13 @@ func main() {
   console.Ilog("Item text sum: " + Hash([]byte(itemText)))
 
 
+  console.Log("Copying includes from ", config.Include_path, " to ", args.WorkPath)
+  err := copy.Copy(config.Include_path, args.WorkPath + "/include")
+  if (err != nil) {
+    console.Fatal(err)
+  }
 
-  err := os.Chdir(args.WorkPath) // We are now in the workpath, and can use "." to refer to the current location.
+  err = os.Chdir(args.WorkPath) // We are now in the workpath, and can use "." to refer to the current location.
   if (err != nil) { console.Fatal(err.Error()) }
 
   console.Log("Generating objects...")
