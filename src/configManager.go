@@ -41,7 +41,6 @@ type Arguments struct {
   Unjail    *bool
   Filename  *string
   Sort      *bool
-  OutFile   *string
   ConfigFile *string
   WorkPath  string
   Tail      []string
@@ -77,7 +76,6 @@ func ReadArgs() Arguments {
   args.Unjail     = flag.Bool("u", false, "Unjail: Use to remove the restriction jailing symlink destinations to the webroot.")
   args.Filename   = flag.String("f", "index.html", "File: Manually set the name of the HTML file containing the directory listing.")
   args.Sort       = flag.Bool("s", false, "Sort: Sort directory entries alphabetically.")
-  args.OutFile    = flag.String("o", "", "lOgfile: Path to a text file to write program output to (file will be overwritten!). Use along with -qq to output to file and not stdout.")
   args.ConfigFile = flag.String("c", (os.Getenv("HOME") + "/.config/godir/config.toml"), "Specify a file to use as the godir config.")
 
   flag.Parse()
