@@ -81,7 +81,7 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, opts GenO
         tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name())
 
         itemBuffer.WriteString(tmp) // write the composed item into the buffer.
-        
+
       } else { // not a dir, must be file
         // First check to see if the file has changed
         fDat, err := LoadFile(path + "/" + file.Name())
@@ -139,7 +139,7 @@ func GenRootStep(path string) string {
     for i := 0; i < (len(split)-1); i++ {
   		step.WriteString("../")
   	}
-    return step.String()
+    return strings.TrimRight(step.String(), "/")
   }
 }
 
