@@ -11,4 +11,4 @@ clean:
 	rm -rf ./out
 
 testrun:
-	out/godir -v -o ./log.out -c ./src/config.toml.example ./test
+	out/godir -v -c ./src/config.toml.example ./test
