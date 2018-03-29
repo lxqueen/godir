@@ -34,17 +34,17 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, opts GenO
   console.Log("Generating for ", path)
   files,_ := ioutil.ReadDir(path)
 
-  // Load dir.idx, and deserialize it into a filename:hash slice.
+  // Load dir.gdx, and deserialize it into a filename:hash slice.
   // This way, if the name changes, it re generates, and if the contents change, it also regens.
   idx := map[string]ObjData{}
-  idxRaw, err := LoadFile(path + "/dir.idx")
+  idxRaw, err := LoadFile(path + "/dir.gdx")
   if (err != nil) {
-    // This can fail silently since all it means is we don't have a dir.idx yet.
+    // This can fail silently since all it means is we don't have a dir.gdx yet.
     idxRaw = []byte{}
   } else {
     err := json.Unmarshal(idxRaw, &idx)
     if (err != nil) {
-      console.Error(err)
+      console.Error("JSON Unmarshal: ", err)
     }
   }
 
@@ -136,10 +136,10 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, opts GenO
   err = ioutil.WriteFile(path + "/" + *opts.Args.Filename, []byte(pageBuffer), 0644)
   if err != nil { panic(err) }
 
-  // Also, write in the dir.idx file, for skipDirs
+  // Also, write in the dir.gdx file, for skipDirs
   data, err := json.Marshal(idx)
   if (err != nil) { console.Error(err) }
-  err = ioutil.WriteFile(path + "/dir.idx", data, 0644)
+  err = ioutil.WriteFile(path + "/dir.gdx", data, 0644)
 
   // Wait for all the sub-dirs to finish executing before returning yourself.
   if (hasChildren) {
