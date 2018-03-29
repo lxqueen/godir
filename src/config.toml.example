@@ -33,7 +33,8 @@ excludes = [
     "directory.html",
     "search.html",
     ".git",
-    "dir.idx"
+    "dir.idx",
+    "dir.gdx"
 ]
 
 
