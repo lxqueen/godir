@@ -42,7 +42,7 @@ func main() {
   }
 
   // func Logger(level int, sendILogs bool, quiet bool, oFile string) *_logger
-  console := Logger(2, *args.Verbose, *args.Quiet, *args.OutFile)
+  console := Logger(2, *args.Verbose, *args.Quiet, "")
 
   // *** Debug Mode Sanity Output *** //
 
