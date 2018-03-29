@@ -7,6 +7,7 @@ import (
     "fmt"
     "github.com/otiai10/copy"
     "sync"
+    "io/ioutil"
 )
 
 func main() {
@@ -156,8 +157,14 @@ func main() {
   console.Ilog("Item text sum: " + Hash([]byte(itemText)))
 
 
-  console.Log("Copying includes from ", config.Include_path, " to ", args.WorkPath)
-  err := copy.Copy(config.Include_path, args.WorkPath + "/include")
+  console.Log("Copying includes from ", config.Include_path, " to ", args.WorkPath + "/")
+  err := copy.Copy(config.Include_path, args.WorkPath)
+  if (err != nil) {
+    console.Fatal(err)
+  }
+
+  console.Log("Copying search.html from ", config.SearchTemplate, " to ", args.WorkPath + "/search.html")
+  err = ioutil.WriteFile(args.WorkPath + "/search.html", []byte(searchText), 0644)
   if (err != nil) {
     console.Fatal(err)
   }
