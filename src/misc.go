@@ -135,15 +135,7 @@ func Hash(data []byte) string {
   return strconv.FormatUint(h.Sum64(), 16)
 }
 
-// https://stackoverflow.com/questions/15323767/does-golang-have-if-x-in-construct-similar-to-python
-func StringInSlice(a string, list []string) bool {
-    for _, b := range list {
-        if b == a {
-            return true
-        }
-    }
-    return false
-}
+
 
 // Function to safely and abstractly load template files.
 func LoadFile(path string) ([]byte, error) {
