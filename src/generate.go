@@ -6,6 +6,8 @@ import (
   "bytes"
   "strings"
   "sync"
+  "github.com/gosuri/uiprogress"
+  "time"
 )
 
 type GenOpts struct {
@@ -23,7 +25,7 @@ type ObjData struct {
 
 
 // Recursive generate async.
-func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, semaphore chan struct{}, opts GenOpts) {
+func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, semaphore chan struct{}, bar *uiprogress.Bar, opts GenOpts) {
   defer wg.Done() // Terminate the goroutine in the waitgroup when we've finished.
 
   semaphore <- struct{}{} // lock
@@ -77,7 +79,7 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, semaphore
         // Add one to the waitgroup, and start the goroutine for that subdir.
         wg.Add(1)
         console.Ilog("Spawning new goroutine for subdir ", path + "/" + file.Name())
-        go GenerateAsync(path + "/" + file.Name(), console, wg, semaphore, opts)
+        go GenerateAsync(path + "/" + file.Name(), console, wg, semaphore, bar, opts)
 
         // Sub in tags
         tmp = SubTag(tmp, opts.Conf.Tag_class, "icon dir")
@@ -120,7 +122,7 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, semaphore
         fileRec["lastmodified"] = file.ModTime().Format("2006-01-02 15:04:05")
         fileRec["name"] = file.Name()
 
-        console.Ilog("Marshalling ", file.Name(), " to include/files.json")
+        console.Ilog("Marshalling ", path + "/" + file.Name(), " to include/files.json")
         jdata, err := json.Marshal(fileRec)
         if (err != nil) {
           console.Fatal(err)
@@ -129,7 +131,7 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, semaphore
         if (err != nil) {
           console.Fatal(err)
         }
-
+        bar.Incr()
       } // END if/else IsDir()
     } // END if ( !(StringInSlice(f.Name(), opts.Conf.Excludes) ) )
   } // END for _, file := range files

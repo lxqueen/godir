@@ -22,22 +22,22 @@ Here is the help program help message, when run with `-h` or `--help`. Please no
 Also note that windows users will always need to manually specify the `config.toml` file, because of the way home directories work on non-unix systems.
 
 ```
-Usage of ./godir:
-  godir WorkPath
-
-Additional Arguments:
+Usage of out/godir:
   -F	Force: Force-regenerate all directories, even if no changes have been made.
   -V	Version: Get program version and some extra info.
   -c string
-    	Specify a file to use as the godir config. (default "$HOME/.config/godir/config.toml")
+    	Specify a file to use as the godir config. (default "/home/monty/.config/godir/config.toml")
   -f string
     	File: Manually set the name of the HTML file containing the directory listing. (default "index.html")
+  -m int
+    	Maximum number of workers to run at a time. Set to lower numbers if you are experiencing OutOfMemory errors (default 50).
   -q	Quiet: Decrease Logging Levels to Warning+
   -qq
     	Super Quiet: Makes the program not output to stdout, only displaying fatal errors.
   -s	Sort: Sort directory entries alphabetically.
   -u	Unjail: Use to remove the restriction jailing symlink destinations to the webroot.
-
+  -v	Verbose: Make the program give more detailed output.
+  -w string
 ```
 
 # Configuration

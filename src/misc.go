@@ -102,13 +102,13 @@ func DirTreeCount(path string) int {
 }
 
 // Add excludes to this eventually
-func DirTreeCountAsync(path string, out chan int) {
+func DirTreeCountAsync(path string, excludes []string, out chan int) {
   files,_ := ioutil.ReadDir(path)
   count := 0
   subdirs := 0
   // First count the amount of subdirectories.
   for _, f := range files {
-    if (f.IsDir()) { subdirs++ }
+    if (!f.IsDir() && !StringInSlice(f.Name(), excludes)) { subdirs++ } // only count those that aren't directories and aren't in excludes
   }
 
   // Make a child channel that holds an amount of ints equal to the amount of subdirectories.
@@ -116,8 +116,8 @@ func DirTreeCountAsync(path string, out chan int) {
 
   // Now actually delve into subdirs recursively
   for _, f := range files {
-      if (f.IsDir()) {
-        go DirTreeCountAsync(path + "/" + f.Name(), childChan)
+      if (!f.IsDir() && !StringInSlice(f.Name(), excludes)) {
+        go DirTreeCountAsync(path + "/" + f.Name(), excludes, childChan)
       }
       count++
   }

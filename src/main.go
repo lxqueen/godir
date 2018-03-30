@@ -10,6 +10,7 @@ import (
     "io/ioutil"
     "strings"
     "runtime"
+    "github.com/gosuri/uiprogress"
 )
 
 func main() {
@@ -139,14 +140,12 @@ func main() {
   // Loop through workpath and count how much we have to process.
 
   // The async function is insanely fast.
-  /*
   console.Log("Counting objects...")
   timer = time.Now()
   outChan := make(chan int)
-  go DirTreeCountAsync(args.WorkPath, outChan)
+  go DirTreeCountAsync(args.WorkPath, config.Excludes, outChan)
   memberCount := <- outChan
   console.Log("Found ", memberCount, " objects in ", time.Since(timer))
-  */
 
   /*
 
@@ -189,11 +188,16 @@ func main() {
     console.Fatal(err)
   }
 
-  semaphore := make(chan struct{}, *args.MaxRoutines)
+  // Start bar
+  uiprogress.Start()
+  bar := uiprogress.AddBar(memberCount)
+  bar.AppendCompleted()
+  bar.PrependElapsed()
 
+  semaphore := make(chan struct{}, *args.MaxRoutines) // Semaphore to limit max running goroutines
   var wg sync.WaitGroup
   wg.Add(1)
-  go GenerateAsync(".", *console, &wg, semaphore, GenOpts{ Conf: config, Args: args, ThemeTemplate: themeText, ItemTemplate: itemText } )
+  go GenerateAsync(".", *console, &wg, semaphore, bar, GenOpts{ Conf: config, Args: args, ThemeTemplate: themeText, ItemTemplate: itemText } )
 
   wg.Wait() // wait for completion.
 
