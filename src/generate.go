@@ -23,8 +23,14 @@ type ObjData struct {
 
 
 // Recursive generate async.
-func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, opts GenOpts) {
+func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, semaphore chan struct{}, opts GenOpts) {
   defer wg.Done() // Terminate the goroutine in the waitgroup when we've finished.
+
+  semaphore <- struct{}{} // lock
+  defer func() {
+    <-semaphore //unlock
+  }()
+
 
   console.Log("Generating for ", path)
 
@@ -71,7 +77,7 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, opts GenO
         // Add one to the waitgroup, and start the goroutine for that subdir.
         wg.Add(1)
         console.Ilog("Spawning new goroutine for subdir ", path + "/" + file.Name())
-        go GenerateAsync(path + "/" + file.Name(), console, wg, opts)
+        go GenerateAsync(path + "/" + file.Name(), console, wg, semaphore, opts)
 
         // Sub in tags
         tmp = SubTag(tmp, opts.Conf.Tag_class, "icon dir")
@@ -85,9 +91,12 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, opts GenO
 
       } else { // not a dir, must be file
         // First check to see if the file has changed
-        fDat, err := LoadFile(path + "/" + file.Name())
-        if ( err != nil ) { console.Error("Unable to open file ", path + "/" + file.Name()) }
-        changed := RecordChanged(idx, file.Name(), fDat, console)
+        changed := true // Default. In case we are forcing this will make it always generate.
+        if( !*opts.Args.Force ) { // if we're not forcing... (if we are forcing then theres no point in doing this)
+          fDat, err := LoadFile(path + "/" + file.Name())
+          if ( err != nil ) { console.Error("Unable to open file ", path + "/" + file.Name()) }
+          changed = RecordChanged(idx, file.Name(), fDat, console)
+        }
 
         if (changed || *opts.Args.Force) {
           tmp = SubTag(tmp, opts.Conf.Tag_class, "icon file")
@@ -142,7 +151,7 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, opts GenO
 
   // Also, write in the dir.gdx file, for skipDirs
   data, err := json.Marshal(idx)
-  if (err != nil) { console.Fatal("Unable to write to ", path, "/dir.idx : ", err) }
+  if (err != nil) { console.Fatal("Unable to write to ", path, "/dir.gdx : ", err) }
   err = ioutil.WriteFile(path + "/dir.gdx", data, 0644)
 } // END func GenerateAsync
 
@@ -163,6 +172,20 @@ func GenRootStep(path string) string {
 }
 
 func GenBreadCrumb(path string) string {
+  pathSlice := strings.Split(path, "/")
+  var breadCrumb bytes.Buffer
+  //crumbSep := "<a class='smaller' href='#'> > </a>"
+  crumbItem := "<a class='smaller' href='$crumbAddr$'> $name$ </a>"
+
+  for _, crumb := range pathSlice {
+    // First do crumbname
+    if (crumb == ".") {
+      breadCrumb.WriteString(strings.Replace(crumbItem, "$name$", "", -1))
+    } else {
+      breadCrumb.WriteString(strings.Replace(crumbItem, "$name", "", -1))
+    }
+    // now crumb's link address
+  }
   return "BREADCRUMB WIP"
 }
 

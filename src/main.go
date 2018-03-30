@@ -9,12 +9,16 @@ import (
     "sync"
     "io/ioutil"
     "strings"
+    "runtime"
 )
 
 func main() {
-
   // Time program execution
   start := time.Now()
+
+  // Set a max number of processes equal to the amount of cpus.
+  // https://reddit.com/r/golang/comments/290znn/goroutine_crazy_memory_usage
+  runtime.GOMAXPROCS( runtime.NumCPU() )
 
 
   Ver := "0.1.2"  // Version
@@ -185,9 +189,11 @@ func main() {
     console.Fatal(err)
   }
 
+  semaphore := make(chan struct{}, *args.MaxRoutines)
+
   var wg sync.WaitGroup
   wg.Add(1)
-  go GenerateAsync(".", *console, &wg, GenOpts{ Conf: config, Args: args, ThemeTemplate: themeText, ItemTemplate: itemText } )
+  go GenerateAsync(".", *console, &wg, semaphore, GenOpts{ Conf: config, Args: args, ThemeTemplate: themeText, ItemTemplate: itemText } )
 
   wg.Wait() // wait for completion.
 

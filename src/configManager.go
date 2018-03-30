@@ -41,6 +41,7 @@ type Arguments struct {
   Unjail    *bool
   Filename  *string
   Sort      *bool
+  MaxRoutines *int
   ConfigFile *string
   WorkPath  string
   Tail      []string
@@ -69,7 +70,8 @@ func ReadArgs() Arguments {
 
   args.Verbose    = flag.Bool("v", false, "Verbose: Make the program give more detailed output.")
   args.Version    = flag.Bool("V", false, "Version: Get program version and some extra info.")
-  args.Quiet      = flag.Bool("q",false, "Quiet: Decrease Logging Levels to Warning+")
+  args.Quiet      = flag.Bool("q", false, "Quiet: Decrease Logging Levels to Warning+")
+  args.MaxRoutines = flag.Int("m", 100, "Maximum number of workers to run at a time. Set to lower numbers if you are experiencing OutOfMemory errors.")
   args.SuperQuiet = flag.Bool("qq",false, "Super Quiet: Makes the program not output to stdout, only displaying fatal errors.")
   args.Force      = flag.Bool("F", false, "Force: Force-regenerate all directories, even if no changes have been made.")
   args.Webroot    = flag.String("w", "", "Webroot: Specify a webroot to jail symlinks to.")
