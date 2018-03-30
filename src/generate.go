@@ -7,7 +7,6 @@ import (
   "strings"
   "sync"
   "github.com/gosuri/uiprogress"
-  "time"
 )
 
 type GenOpts struct {
