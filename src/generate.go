@@ -6,16 +6,7 @@ import (
   "bytes"
   "strings"
   "sync"
-  "github.com/gosuri/uiprogress"
 )
-
-type GenOpts struct {
-  Conf Config
-  Args Arguments
-
-  ThemeTemplate string
-  ItemTemplate  string
-}
 
 type ObjData struct {
   Hash string
@@ -24,7 +15,7 @@ type ObjData struct {
 
 
 // Recursive generate async.
-func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, semaphore chan struct{}, bar *uiprogress.Bar, opts GenOpts) {
+func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   defer wg.Done() // Terminate the goroutine in the waitgroup when we've finished.
 
   semaphore <- struct{}{} // lock
@@ -78,7 +69,7 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, semaphore
         // Add one to the waitgroup, and start the goroutine for that subdir.
         wg.Add(1)
         console.Ilog("Spawning new goroutine for subdir ", path + "/" + file.Name())
-        go GenerateAsync(path + "/" + file.Name(), console, wg, semaphore, bar, opts)
+        go GenerateAsync(path + "/" + file.Name(), wg, semaphore)
 
         // Sub in tags
         tmp = SubTag(tmp, opts.Conf.Tag_class, "icon dir")
@@ -96,7 +87,7 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, semaphore
         if( !*opts.Args.Force ) { // if we're not forcing... (if we are forcing then theres no point in doing this)
           fDat, err := LoadFile(path + "/" + file.Name())
           if ( err != nil ) { console.Error("Unable to open file ", path + "/" + file.Name()) }
-          changed = RecordChanged(idx, file.Name(), fDat, console)
+          changed = RecordChanged(idx, file.Name(), fDat)
         }
 
         if (changed || *opts.Args.Force) {
@@ -130,7 +121,6 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, semaphore
         if (err != nil) {
           console.Fatal(err)
         }
-        bar.Incr()
       } // END if/else IsDir()
     } // END if ( !(StringInSlice(f.Name(), opts.Conf.Excludes) ) )
   } // END for _, file := range files
@@ -154,6 +144,8 @@ func GenerateAsync(path string, console LogObject, wg *sync.WaitGroup, semaphore
   data, err := json.Marshal(idx)
   if (err != nil) { console.Fatal("Unable to write to ", path, "/dir.gdx : ", err) }
   err = ioutil.WriteFile(path + "/dir.gdx", data, 0644)
+
+  console.Ilog(MemUsage())
 } // END func GenerateAsync
 
 
@@ -176,7 +168,7 @@ func GenBreadCrumb(path string) string {
   pathSlice := strings.Split(path, "/")
   var breadCrumb bytes.Buffer
   //crumbSep := "<a class='smaller' href='#'> > </a>"
-  crumbItem := "<a class='smaller' href='$crumbAddr$'> $name$ </a>"
+  crumbItem := "<a class='breadcrumb' href='$crumbAddr$'> $name$ </a>"
 
   for _, crumb := range pathSlice {
     // First do crumbname
@@ -190,7 +182,7 @@ func GenBreadCrumb(path string) string {
   return "BREADCRUMB WIP"
 }
 
-func RecordChanged(idx map[string]ObjData, fName string, fDat []byte, console LogObject) bool {
+func RecordChanged(idx map[string]ObjData, fName string, fDat []byte) bool {
   record, exists := idx[fName]
   if ( exists ) {
     console.Ilog("File ", fName, " not in dir.gdx.")

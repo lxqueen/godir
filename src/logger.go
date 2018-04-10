@@ -4,6 +4,7 @@ import (
     "fmt"
     "time"
     "os"
+    "runtime"
 )
 
 type LogObject struct {
@@ -96,4 +97,15 @@ func (d *LogObject) Ilog(msgs ...interface{}) {
 
 func (d *LogObject) Prefix(bracket string) {
   fmt.Printf("[%s][%s] ", bracket, time.Now().Format("3:04 PM") )
+}
+
+func MemUsage() string {
+  var m runtime.MemStats
+  runtime.ReadMemStats(&m)
+
+  return fmt.Sprintf("MEMINFO:Alloc=%vMiB:TotalAlloc=%vMiB:Sys=%vMiB:NumGC=%v", bToMb(m.Alloc), bToMb(m.TotalAlloc), bToMb(m.Sys), m.NumGC)
+}
+
+func bToMb(b uint64) uint64 {
+    return b / 1024 / 1024
 }

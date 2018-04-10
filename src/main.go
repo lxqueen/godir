@@ -10,8 +10,21 @@ import (
     "io/ioutil"
     "strings"
     "runtime"
-    "github.com/gosuri/uiprogress"
 )
+
+type GenOpts struct {
+  Conf Config
+  Args Arguments
+
+  ThemeTemplate string
+  ItemTemplate  string
+}
+
+// Global var - read-only for config.
+var opts GenOpts
+
+// Global console object for debugging and log output.
+var console *LogObject
 
 func main() {
   // Time program execution
@@ -38,22 +51,23 @@ func main() {
   */
 
   // Load the args.
-  args := ReadArgs()
-  config := ReadConfig(*args.ConfigFile)
+  opts = GenOpts{}
+  opts.Args = ReadArgs()
+  opts.Conf = ReadConfig(*opts.Args.ConfigFile)
 
   // --version output
-  if ( *args.Version ) {
+  if ( *opts.Args.Version ) {
     fmt.Println("godir V." + Ver + Rev)
     fmt.Println("\ngodir is Licensed under the GNU GPL v3.\nCode copyright (c) 2018 Nicolas \"Montessquio\" Suarez.")
     os.Exit(0)
   }
 
   // func Logger(level int, sendILogs bool, quiet bool, oFile string) *_logger
-  console := Logger(2, *args.Verbose, *args.Quiet, "")
+  console = Logger(2, *opts.Args.Verbose, *opts.Args.Quiet, "")
 
   // *** Debug Mode Sanity Output *** //
 
-  if ( *args.Verbose ) { // AKA test mode.
+  if ( *opts.Args.Verbose ) { // AKA test mode.
     console.Ilog("The following Args were Parsed:")
     /*
     fmt.Printf("Verbose %t\n", *args.Verbose)
@@ -70,12 +84,12 @@ func main() {
     fmt.Printf("workPath %q\n", args.WorkPath)
     fmt.Printf("tail: %q\n", args.Tail)
     */
-    data, err := json.Marshal(args)
+    data, err := json.Marshal(opts.Args)
     if err != nil { console.Fatal(err.Error()) }
     fmt.Printf("%s\n", data)
 
-    console.Ilog("\nThe following configuration options were loaded from " + *args.ConfigFile + ":")
-    data, err = json.Marshal(config)
+    console.Ilog("\nThe following configuration options were loaded from " + *opts.Args.ConfigFile + ":")
+    data, err = json.Marshal(opts.Conf)
     if err != nil { console.Fatal(err.Error()) }
     fmt.Printf("%s\n", data)
 
@@ -98,9 +112,9 @@ func main() {
 
   timer := time.Now() // Timer
 
-  go LoadFileAsync(config.ThemeTemplate, chanTheme)
-  go LoadFileAsync(config.SearchTemplate, chanSearch)
-  go LoadFileAsync(config.ItemTemplate, chanItem)
+  go LoadFileAsync(opts.Conf.ThemeTemplate, chanTheme)
+  go LoadFileAsync(opts.Conf.SearchTemplate, chanSearch)
+  go LoadFileAsync(opts.Conf.ItemTemplate, chanItem)
 
   // Receive, then verify, each template file.
   themeOut := <- chanTheme
@@ -143,7 +157,7 @@ func main() {
   console.Log("Counting objects...")
   timer = time.Now()
   outChan := make(chan int)
-  go DirTreeCountAsync(args.WorkPath, config.Excludes, outChan)
+  go DirTreeCountAsync(opts.Args.WorkPath, opts.Conf.Excludes, outChan)
   memberCount := <- outChan
   console.Log("Found ", memberCount, " objects in ", time.Since(timer))
 
@@ -153,27 +167,27 @@ func main() {
 
   */
   console.Ilog("Performing static substitutions...")
-  themeText := SubTag(string(themeRaw), config.Tag_domain, config.Domain)
-  searchText := SubTag(string(searchRaw), config.Tag_domain, config.Domain)
-  itemText := SubTag(string(itemRaw), config.Tag_domain, config.Domain)
-  console.Ilog("Theme text sum: " + Hash([]byte(themeText)))
+  opts.ThemeTemplate = SubTag(string(themeRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
+  searchText := SubTag(string(searchRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
+  opts.ItemTemplate = SubTag(string(itemRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
+  console.Ilog("Theme text sum: " + Hash([]byte(opts.ThemeTemplate)))
   console.Ilog("Search text sum: " + Hash([]byte(searchText)))
-  console.Ilog("Item text sum: " + Hash([]byte(itemText)))
+  console.Ilog("Item text sum: " + Hash([]byte(opts.ItemTemplate)))
 
 
-  console.Log("Copying includes from ", config.Include_path, " to ", args.WorkPath + "/")
-  err := copy.Copy(config.Include_path, args.WorkPath)
+  console.Log("Copying includes from ", opts.Conf.Include_path, " to ", opts.Args.WorkPath + "/")
+  err := copy.Copy(opts.Conf.Include_path, opts.Args.WorkPath)
   if (err != nil) {
     console.Fatal(err)
   }
 
-  console.Log("Copying search.html from ", config.SearchTemplate, " to ", args.WorkPath + "/search.html")
-  err = ioutil.WriteFile(args.WorkPath + "/search.html", []byte(searchText), 0644)
+  console.Log("Copying search.html from ", opts.Conf.SearchTemplate, " to ", opts.Args.WorkPath + "/search.html")
+  err = ioutil.WriteFile(opts.Args.WorkPath + "/search.html", []byte(searchText), 0644)
   if (err != nil) {
     console.Fatal(err)
   }
 
-  err = os.Chdir(args.WorkPath) // We are now in the workpath, and can use "." to refer to the current location.
+  err = os.Chdir(opts.Args.WorkPath) // We are now in the workpath, and can use "." to refer to the current location.
   if (err != nil) { console.Fatal(err.Error()) }
 
   console.Log("Generating objects...")
@@ -188,16 +202,10 @@ func main() {
     console.Fatal(err)
   }
 
-  // Start bar
-  uiprogress.Start()
-  bar := uiprogress.AddBar(memberCount)
-  bar.AppendCompleted()
-  bar.PrependElapsed()
-
-  semaphore := make(chan struct{}, *args.MaxRoutines) // Semaphore to limit max running goroutines
+  semaphore := make(chan struct{}, *opts.Args.MaxRoutines) // Semaphore to limit max running goroutines
   var wg sync.WaitGroup
   wg.Add(1)
-  go GenerateAsync(".", *console, &wg, semaphore, bar, GenOpts{ Conf: config, Args: args, ThemeTemplate: themeText, ItemTemplate: itemText } )
+  go GenerateAsync(".", &wg, semaphore)
 
   wg.Wait() // wait for completion.
 
