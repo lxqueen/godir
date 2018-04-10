@@ -4,6 +4,7 @@ all:
 	go get github.com/BurntSushi/toml
 	go get github.com/OneOfOne/xxhash
 	go get github.com/otiai10/copy
+	
 	go build -o "./out/godir" ./src/*.go
 	@echo "Done"
 

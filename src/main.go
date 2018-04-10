@@ -26,6 +26,8 @@ var opts GenOpts
 // Global console object for debugging and log output.
 var console *LogObject
 
+var noWrite bool = true // if true, will prevent *actually* writing files
+
 func main() {
   // Time program execution
   start := time.Now()
@@ -176,13 +178,18 @@ func main() {
 
 
   console.Log("Copying includes from ", opts.Conf.Include_path, " to ", opts.Args.WorkPath + "/")
-  err := copy.Copy(opts.Conf.Include_path, opts.Args.WorkPath)
+  var err error
+  if (noWrite) {
+    err = nil
+  } else {
+    err = copy.Copy(opts.Conf.Include_path, opts.Args.WorkPath)
+  }
   if (err != nil) {
     console.Fatal(err)
   }
 
   console.Log("Copying search.html from ", opts.Conf.SearchTemplate, " to ", opts.Args.WorkPath + "/search.html")
-  err = ioutil.WriteFile(opts.Args.WorkPath + "/search.html", []byte(searchText), 0644)
+  err = WriteFile(opts.Args.WorkPath + "/search.html", []byte(searchText), 0644)
   if (err != nil) {
     console.Fatal(err)
   }
@@ -197,7 +204,7 @@ func main() {
   // Use barIncrement() to increase the bar
 
   // Create the files.json file in includes/
-  err = ioutil.WriteFile("./include/files.json", []byte("var jsonText = '["), 0644)
+  err = WriteFile("./include/files.json", []byte("var jsonText = '["), 0644)
   if (err != nil) {
     console.Fatal(err)
   }
@@ -213,10 +220,12 @@ func main() {
   AppendFile("./include/files.json", []byte("]'"))
 
   // Now sanitize the JSON.
-  filesJSON, err := ioutil.ReadFile("./include/files.json")
-  if (err != nil) { console.Fatal(err.Error()) }
-  filesJSON = []byte(strings.Replace(string(filesJSON), ", ", "", 1))
-  err = ioutil.WriteFile("./include/files.json", []byte(filesJSON), 0644)
+  if (!noWrite) {
+    filesJSON, err := ioutil.ReadFile("./include/files.json")
+    if (err != nil) { console.Fatal(err.Error()) }
+    filesJSON = []byte(strings.Replace(string(filesJSON), ", ", "", 1))
+    err = WriteFile("./include/files.json", []byte(filesJSON), 0644)
+  }
 
   // Program end.
   console.Log("Done. Took ", time.Since(timer), " (From launch: ", time.Since(start), ")")

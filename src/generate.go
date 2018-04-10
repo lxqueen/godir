@@ -62,6 +62,8 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   // iterate over every file & dir in the directory.
   for _, file := range files {
     if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
+      console.Ilog(MemUsage())
+      
       tmp := opts.ItemTemplate
       fileRec := map[string]interface{}{}
       if ( file.IsDir() ) { // if it's a directory...
@@ -137,15 +139,13 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   // Now sub the contents into the page, as generated.
   page = SubTag(page, opts.Conf.Tag_contents, itemBuffer.String())
   // Now write the page to the actual file.
-  err = ioutil.WriteFile(path + "/" + *opts.Args.Filename, []byte(page), 0644)
+  err = WriteFile(path + "/" + *opts.Args.Filename, []byte(page), 0644)
   if err != nil { console.Fatal("Unable to write page file ", *opts.Args.Filename, " : ", err) }
 
   // Also, write in the dir.gdx file, for skipDirs
   data, err := json.Marshal(idx)
   if (err != nil) { console.Fatal("Unable to write to ", path, "/dir.gdx : ", err) }
-  err = ioutil.WriteFile(path + "/dir.gdx", data, 0644)
-
-  console.Ilog(MemUsage())
+  err = WriteFile(path + "/dir.gdx", data, 0644)
 } // END func GenerateAsync
 
 

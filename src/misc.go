@@ -171,18 +171,30 @@ func LoadFileAsync(path string, out chan FileAsyncOutput) {
 }
 
 func AppendFile(filename string, data []byte) error {
-  f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
-  if (err != nil) {
-    return err
-  }
+  if (noWrite) {
+    return nil
+  } else {
+    f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
+    if (err != nil) {
+      return err
+    }
 
-  defer f.Close()
+    defer f.Close()
 
-  _, err = f.WriteString(string(data))
-  if (err != nil) {
-    return err
+    _, err = f.WriteString(string(data))
+    if (err != nil) {
+      return err
+    }
+    return nil
   }
-  return nil
+}
+
+func WriteFile(path string, data []byte, perm os.FileMode) error {
+  if (noWrite) {
+    return nil
+  } else {
+    return ioutil.WriteFile(path, data, perm)
+  }
 }
 
 /* https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console

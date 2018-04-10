@@ -103,7 +103,7 @@ func MemUsage() string {
   var m runtime.MemStats
   runtime.ReadMemStats(&m)
 
-  return fmt.Sprintf("MEMINFO:Alloc=%vMiB:TotalAlloc=%vMiB:Sys=%vMiB:NumGC=%v", bToMb(m.Alloc), bToMb(m.TotalAlloc), bToMb(m.Sys), m.NumGC)
+  return fmt.Sprintf("MEMINFO:Alloc=%vMiB:HEAP=%vMiB:Sys=%vMiB:NumGC=%v", bToMb(m.Alloc), bToMb(m.HeapAlloc), bToMb(m.Sys), m.NumGC)
 }
 
 func bToMb(b uint64) uint64 {
