@@ -141,9 +141,9 @@ func main() {
 
   console.Log("Loaded 3 template files in " + time.Since(timer).String())
 
-  console.Ilog("Theme file sum: " + Hash([]byte(themeRaw)))
-  console.Ilog("Search file sum: " + Hash([]byte(searchRaw)))
-  console.Ilog("Item file sum: " + Hash([]byte(itemRaw)))
+  console.Ilog("Theme file sum: " + HashBytes([]byte(themeRaw)))
+  console.Ilog("Search file sum: " + HashBytes([]byte(searchRaw)))
+  console.Ilog("Item file sum: " + HashBytes([]byte(itemRaw)))
 
 
   /*

@@ -100,9 +100,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
           tmp = SubTag(tmp, opts.Conf.Tag_last_modified, file.ModTime().Format("2006-01-02 15:04:05"))
           tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name())
 
-          fileData, err := LoadFile( path + "/" + file.Name()) // open the file for hashing
-          if (err != nil) { console.Error("Error opening file ", path, "/", file.Name(), " for hashing : ", err) }
-          idx[file.Name()] = ObjData{ Hash: Hash(fileData), Html: tmp } // Re-set the appropriate fields, since we've changed something.
+          idx[file.Name()] = ObjData{ Hash: HashFile(path + "/" + file.Name()), Html: tmp } // Re-set the appropriate fields, since we've changed something.
           itemBuffer.WriteString(tmp)
         } else {
           itemBuffer.WriteString(idx[file.Name()].Html) // If it hasn't changed, and we're not forcing, just use the existing html.
@@ -188,11 +186,11 @@ func RecordChanged(idx map[string]ObjData, fName string, fDat []byte) bool {
     console.Ilog("File ", fName, " not in dir.gdx.")
     return true
   }
-  if ( (Hash(fDat) == record.Hash) ) { // if it's unchanged...
-    console.Ilog("File ", fName, " unchanged.")
+  if ( (HashFile(path) == record.Hash) ) { // if it's unchanged...
+    console.Ilog("File ", path, " unchanged.")
     return false
   } else { // if it doesn't match, it's been changed.
-    console.Ilog("File ", fName, " changed.")
+    console.Ilog("File ", path, " changed.")
     return true
   }
 }

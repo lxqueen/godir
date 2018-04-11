@@ -6,8 +6,10 @@ import (
   "strconv"
   "io/ioutil"
   "path/filepath"
-  "github.com/OneOfOne/xxhash"
+  "github.com/kalafut/imohash"
   "errors"
+  "fmt"
+  "encoding/hex"
 )
 
 type FileAsyncOutput struct {
@@ -129,12 +131,16 @@ func DirTreeCountAsync(path string, excludes []string, out chan int) {
   out <- count
 }
 
-func Hash(data []byte) string {
-  h := xxhash.New64()
-	h.Write(data)
-  return strconv.FormatUint(h.Sum64(), 16)
+func HashBytes(data []byte) string {
+  sum := imohash.Sum(data)
+  return hex.EncodeToString(sum[:16])
 }
 
+func HashFile(path string) string {
+  sum, err := imohash.SumFile(path)
+  if (err != nil) { fmt.Println("[ERR] ", err) }
+  return hex.EncodeToString(sum[:16])
+}
 
 
 // Function to safely and abstractly load template files.
