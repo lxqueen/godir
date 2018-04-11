@@ -16,6 +16,10 @@ type ObjData struct {
 
 // Recursive generate async.
 func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
+
+  // Large buffer to simulate heavy memory use
+  buffer := make([]byte, 8*4096*4096)
+
   defer wg.Done() // Terminate the goroutine in the waitgroup when we've finished.
 
   semaphore <- struct{}{} // lock
@@ -144,6 +148,8 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   data, err := json.Marshal(idx)
   if (err != nil) { console.Fatal("Unable to write to ", path, "/dir.gdx : ", err) }
   err = WriteFile(path + "/dir.gdx", data, 0644)
+
+  buffer[1] = 0x01 // Don't free buffer until the very end of the goroutine
 } // END func GenerateAsync
 
 
