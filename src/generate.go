@@ -30,6 +30,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
 
   console.Log("Generating for ", path)
+  console.Ilog(MemUsage() + "Loc=DirPreload:" + path)
 
   // Get a list of files and directories in PATH
   files, err := ioutil.ReadDir(path)
@@ -44,6 +45,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   if (err != nil) {
     console.Error("JSON Unmarshal Error: ", err)
   }
+  console.Ilog(MemUsage() + "Loc=IDXLoaded:" + path)
 
   // This holds a path (e.g. "../../") that leads to the root of the file directory.
   rootStep := GenRootStep(path)
@@ -82,7 +84,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   // iterate over every file & dir in the directory.
   for _, file := range files {
     if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
-      console.Ilog(MemUsage() + "Loc:" + path + "/" + file.Name())
+      console.Ilog(MemUsage() + "Loc=PreGenFile:" + path + "/" + file.Name())
 
       tmp = opts.ItemTemplate
       fileRec := map[string]interface{}{}
@@ -159,6 +161,8 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         }
       } // END if/else IsDir()
     } // END if ( !(StringInSlice(f.Name(), opts.Conf.Excludes) ) )
+
+    console.Ilog(MemUsage() + "Loc=PostGenFile:" + path + "/" + file.Name())
   } // END for _, file := range files
 
 
@@ -194,6 +198,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
     console.Error("Unable to write to ", path, "/dir.gdx : ", err)
     return
   }
+  console.Ilog(MemUsage() + "Loc=PostGenDir:" + path)
 } // END func GenerateAsync
 
 
@@ -223,7 +228,7 @@ func GenBreadCrumb(path string) string {
     if (crumb == ".") {
       breadCrumb.WriteString(strings.Replace(crumbItem, "$name$", "", -1))
     } else {
-      breadCrumb.WriteString(strings.Replace(crumbItem, "$name", "", -1))
+      breadCrumb.WriteString(strings.Replace(crumbItem, "$name$", "", -1))
     }
     // now crumb's link address
   }
