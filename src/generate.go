@@ -18,7 +18,7 @@ type ObjData struct {
 func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
   // Large buffer to simulate heavy memory use
-  buffer := make([]byte, 8*4096*4096)
+  buffer := make([]byte, 4*4096*4096)
 
   defer wg.Done() // Terminate the goroutine in the waitgroup when we've finished.
 
