@@ -172,9 +172,9 @@ func main() {
   opts.ThemeTemplate = SubTag(string(themeRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
   searchText := SubTag(string(searchRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
   opts.ItemTemplate = SubTag(string(itemRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
-  console.Ilog("Theme text sum: " + Hash([]byte(opts.ThemeTemplate)))
-  console.Ilog("Search text sum: " + Hash([]byte(searchText)))
-  console.Ilog("Item text sum: " + Hash([]byte(opts.ItemTemplate)))
+  console.Ilog("Theme text sum: " + HashBytes([]byte(opts.ThemeTemplate)))
+  console.Ilog("Search text sum: " + HashBytes([]byte(searchText)))
+  console.Ilog("Item text sum: " + HashBytes([]byte(opts.ItemTemplate)))
 
 
   console.Log("Copying includes from ", opts.Conf.Include_path, " to ", opts.Args.WorkPath + "/")

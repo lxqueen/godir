@@ -63,7 +63,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   for _, file := range files {
     if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
       console.Ilog(MemUsage())
-      
+
       tmp := opts.ItemTemplate
       fileRec := map[string]interface{}{}
       if ( file.IsDir() ) { // if it's a directory...
@@ -89,7 +89,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         if( !*opts.Args.Force ) { // if we're not forcing... (if we are forcing then theres no point in doing this)
           fDat, err := LoadFile(path + "/" + file.Name())
           if ( err != nil ) { console.Error("Unable to open file ", path + "/" + file.Name()) }
-          changed = RecordChanged(idx, file.Name(), fDat)
+          changed = RecordChanged(idx, path, file.Name(), fDat)
         }
 
         if (changed || *opts.Args.Force) {
@@ -180,17 +180,17 @@ func GenBreadCrumb(path string) string {
   return "BREADCRUMB WIP"
 }
 
-func RecordChanged(idx map[string]ObjData, fName string, fDat []byte) bool {
+func RecordChanged(idx map[string]ObjData, path string, fName string, fDat []byte) bool {
   record, exists := idx[fName]
   if ( exists ) {
-    console.Ilog("File ", fName, " not in dir.gdx.")
+    console.Ilog("File ", path + "/" + fName, " not in dir.gdx.")
     return true
   }
-  if ( (HashFile(path) == record.Hash) ) { // if it's unchanged...
-    console.Ilog("File ", path, " unchanged.")
+  if ( (HashFile(path + "/" + fName) == record.Hash) ) { // if it's unchanged...
+    console.Ilog("File ", path + "/" + fName, " unchanged.")
     return false
   } else { // if it doesn't match, it's been changed.
-    console.Ilog("File ", path, " changed.")
+    console.Ilog("File ", path + "/" + fName, " changed.")
     return true
   }
 }
