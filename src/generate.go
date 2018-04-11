@@ -18,7 +18,8 @@ type ObjData struct {
 func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
   // Large buffer to simulate heavy memory use
-  buffer := make([]byte, 4*4096*4096)
+  //buffer := make([]byte, 4*4096*4096)
+  // defer buffer[0] = 0x00 // Don't free buffer until the very end of the goroutine
 
   defer wg.Done() // Terminate the goroutine in the waitgroup when we've finished.
 
@@ -50,6 +51,13 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   // Generate the breadcrumb.
   breadCrumb := GenBreadCrumb(path)
 
+  page := opts.ThemeHeader
+  // Substitute some global tags out of the main page, to get that work out of the way already.
+  page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
+  page = SubTag(page, opts.Conf.Tag_breadcrumb, breadCrumb)
+  page = SubTag(page, opts.Conf.Tag_root_dir, path)
+  page = SubTag(page, opts.Conf.Tag_domain, opts.Conf.Domain)
+  page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
   err = WriteFile(path + "/" + *opts.Args.Filename, []byte(opts.ThemeHeader), 0644)
   if err != nil {
     console.Error("Unable to write page header to file ", *opts.Args.Filename, " : ", err)
@@ -154,6 +162,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   } // END for _, file := range files
 
 
+  page = opts.ThemeFooter
   // Substitute some global tags out of the main page, to get that work out of the way already.
   page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
   page = SubTag(page, opts.Conf.Tag_breadcrumb, breadCrumb)
@@ -161,12 +170,12 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   page = SubTag(page, opts.Conf.Tag_domain, opts.Conf.Domain)
   page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
 
-
-  // Now sub the contents into the page, as generated.
-  page = SubTag(page, opts.Conf.Tag_contents, itemBuffer.String())
-  // Now write the page to the actual file.
+  // Now write the page footer to the actual file.
   err = WriteFile(path + "/" + *opts.Args.Filename, []byte(page), 0644)
-  if err != nil { console.Fatal("Unable to write page file ", *opts.Args.Filename, " : ", err) }
+  if err != nil {
+    console.Error("Unable to write page file ", *opts.Args.Filename, " : ", err)
+    return
+  }
   // Append the footer item to file.
   err = AppendFile(path + "/" + *opts.Args.Filename, []byte(opts.ThemeFooter))
   if err != nil {
@@ -185,8 +194,6 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
     console.Error("Unable to write to ", path, "/dir.gdx : ", err)
     return
   }
-
-  buffer[0] = 0x00 // Don't free buffer until the very end of the goroutine
 } // END func GenerateAsync
 
 

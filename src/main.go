@@ -16,7 +16,8 @@ type GenOpts struct {
   Conf Config
   Args Arguments
 
-  ThemeTemplate string
+  ThemeHeader string
+  ThemeFooter string
   ItemTemplate  string
 }
 
@@ -42,7 +43,7 @@ func main() {
 
   // Just exit with a message if we're running with no arguments.
   if(len(os.Args) < 2) {
-    fmt.Println("No arguments supplied. Use the `-h` flag for help.")
+    fmt.Println("No valid arguments supplied. Use the `-h` flag for help.")
     os.Exit(0)
   }
 
@@ -170,10 +171,7 @@ func main() {
   */
   console.Ilog("Performing static substitutions...")
   // Sub and write the page header
-  themeStr := SubTag(string(themeRaw), page, opts.Conf.Tag_root_dir, path)
-  themeStr = SubTag(themeStr, page, opts.Conf.Tag_domain, opts.Conf.Domain)
-  themeStr = SubTag(themeStr, opts.Conf.Tag_domain, opts.Conf.Domain)
-  themeTmp := strings.Split(themeStr, opts.Conf.Tag_contents) // Split at the contents tag to make a distinct header and footer.
+  themeTmp := strings.Split(SubTag(string(themeRaw), opts.Conf.Tag_domain, opts.Conf.Domain), opts.Conf.Tag_contents) // Split at the contents tag to make a distinct header and footer.
   opts.ThemeHeader = themeTmp[0]
   opts.ThemeFooter = themeTmp[len(themeTmp)-1]
   searchText := SubTag(string(searchRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
