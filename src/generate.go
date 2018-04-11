@@ -22,7 +22,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
   defer wg.Done() // Terminate the goroutine in the waitgroup when we've finished.
 
-  semaphore <- struct{}{} // lock
+  semaphore <- struct{}{}  // lock
   defer func() {
     <-semaphore //unlock
   }()
@@ -32,7 +32,10 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
   // Get a list of files and directories in PATH
   files, err := ioutil.ReadDir(path)
-  if (err != nil) { console.Fatal("Error reading contents of ", path, " : ", err) }
+  if (err != nil) {
+    console.Error("Error reading contents of ", path, " : ", err)
+    return
+  }
 
   // Load dir.gdx, and deserialize it into a filename:hash slice.
   // This way, if the name changes, it re generates, and if the contents change, it also regens.
@@ -41,17 +44,17 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
     console.Error("JSON Unmarshal Error: ", err)
   }
 
-  // This string holds this directory's copy of the page template.
-  page := opts.ThemeTemplate
-
   // This holds a path (e.g. "../../") that leads to the root of the file directory.
   rootStep := GenRootStep(path)
 
   // Generate the breadcrumb.
   breadCrumb := GenBreadCrumb(path)
 
-
-  var itemBuffer bytes.Buffer // Will hold all the items (to be inserted into page at the end.)
+  err = WriteFile(path + "/" + *opts.Args.Filename, []byte(opts.ThemeHeader), 0644)
+  if err != nil {
+    console.Error("Unable to write page header to file ", *opts.Args.Filename, " : ", err)
+    return
+  }
 
   // Add in the "../" item before we generate any real items.
   tmp := opts.ItemTemplate
@@ -61,17 +64,21 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   tmp = SubTag(tmp, opts.Conf.Tag_filename, "Parent Directory")
   tmp = SubTag(tmp, opts.Conf.Tag_last_modified, "-")
   tmp = SubTag(tmp, opts.Conf.Tag_filesize, "-")
-  itemBuffer.WriteString(tmp)
+
+  err = AppendFile(path + "/" + *opts.Args.Filename, []byte(tmp))
+  if err != nil {
+    console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
+    return
+  }
 
   // iterate over every file & dir in the directory.
   for _, file := range files {
     if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
-      console.Ilog(MemUsage())
+      console.Ilog(MemUsage() + "Loc:" + path + "/" + file.Name())
 
-      tmp := opts.ItemTemplate
+      tmp = opts.ItemTemplate
       fileRec := map[string]interface{}{}
       if ( file.IsDir() ) { // if it's a directory...
-
         // Add one to the waitgroup, and start the goroutine for that subdir.
         wg.Add(1)
         console.Ilog("Spawning new goroutine for subdir ", path + "/" + file.Name())
@@ -85,7 +92,12 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         tmp = SubTag(tmp, opts.Conf.Tag_last_modified, file.ModTime().Format("2006-01-02 15:04:05"))
         tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name())
 
-        itemBuffer.WriteString(tmp) // write the composed item into the buffer.
+        // Append the composed item to file.
+        err = AppendFile(path + "/" + *opts.Args.Filename, []byte(tmp))
+        if err != nil {
+          console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
+          return
+        }
 
       } else { // not a dir, must be file
         // First check to see if the file has changed
@@ -105,9 +117,19 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
           tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name())
 
           idx[file.Name()] = ObjData{ Hash: HashFile(path + "/" + file.Name()), Html: tmp } // Re-set the appropriate fields, since we've changed something.
-          itemBuffer.WriteString(tmp)
-        } else {
-          itemBuffer.WriteString(idx[file.Name()].Html) // If it hasn't changed, and we're not forcing, just use the existing html.
+          // Append the composed item to file.
+          err = AppendFile(path + "/" + *opts.Args.Filename, []byte(tmp))
+          if err != nil {
+            console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
+            return
+          }
+        } else {// If it hasn't changed, and we're not forcing, just use the existing html.
+          // Append the composed item to file.
+          err = AppendFile(path + "/" + *opts.Args.Filename, []byte(idx[file.Name()].Html))
+          if err != nil {
+            console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
+            return
+          }
         }
 
         // Add in record for file searching.
@@ -119,11 +141,13 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         console.Ilog("Marshalling ", path + "/" + file.Name(), " to include/files.json")
         jdata, err := json.Marshal(fileRec)
         if (err != nil) {
-          console.Fatal(err)
+          console.Error(err)
+          continue
         }
         err = AppendFile("./include/files.json", append([]byte(", "), jdata...) )
         if (err != nil) {
-          console.Fatal(err)
+          console.Error(err)
+          continue
         }
       } // END if/else IsDir()
     } // END if ( !(StringInSlice(f.Name(), opts.Conf.Excludes) ) )
@@ -143,13 +167,26 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   // Now write the page to the actual file.
   err = WriteFile(path + "/" + *opts.Args.Filename, []byte(page), 0644)
   if err != nil { console.Fatal("Unable to write page file ", *opts.Args.Filename, " : ", err) }
+  // Append the footer item to file.
+  err = AppendFile(path + "/" + *opts.Args.Filename, []byte(opts.ThemeFooter))
+  if err != nil {
+    console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
+    return
+  }
 
   // Also, write in the dir.gdx file, for skipDirs
   data, err := json.Marshal(idx)
-  if (err != nil) { console.Fatal("Unable to write to ", path, "/dir.gdx : ", err) }
+  if (err != nil) {
+    console.Error("Unable to write to ", path, "/dir.gdx : ", err)
+    return
+  }
   err = WriteFile(path + "/dir.gdx", data, 0644)
+  if (err != nil) {
+    console.Error("Unable to write to ", path, "/dir.gdx : ", err)
+    return
+  }
 
-  buffer[1] = 0x01 // Don't free buffer until the very end of the goroutine
+  buffer[0] = 0x00 // Don't free buffer until the very end of the goroutine
 } // END func GenerateAsync
 
 

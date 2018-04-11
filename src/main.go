@@ -169,10 +169,16 @@ func main() {
 
   */
   console.Ilog("Performing static substitutions...")
-  opts.ThemeTemplate = SubTag(string(themeRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
+  // Sub and write the page header
+  themeStr := SubTag(string(themeRaw), page, opts.Conf.Tag_root_dir, path)
+  themeStr = SubTag(themeStr, page, opts.Conf.Tag_domain, opts.Conf.Domain)
+  themeStr = SubTag(themeStr, opts.Conf.Tag_domain, opts.Conf.Domain)
+  themeTmp := strings.Split(themeStr, opts.Conf.Tag_contents) // Split at the contents tag to make a distinct header and footer.
+  opts.ThemeHeader = themeTmp[0]
+  opts.ThemeFooter = themeTmp[len(themeTmp)-1]
   searchText := SubTag(string(searchRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
   opts.ItemTemplate = SubTag(string(itemRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
-  console.Ilog("Theme text sum: " + HashBytes([]byte(opts.ThemeTemplate)))
+  console.Ilog("Theme text sum: " + HashBytes([]byte(opts.ThemeHeader + opts.ThemeFooter)))
   console.Ilog("Search text sum: " + HashBytes([]byte(searchText)))
   console.Ilog("Item text sum: " + HashBytes([]byte(opts.ItemTemplate)))
 
