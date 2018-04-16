@@ -38,8 +38,8 @@ func main() {
   runtime.GOMAXPROCS( runtime.NumCPU() )
 
 
-  Ver := "0.1.2"  // Version
-  Rev := "a"      // Revision (how many times has this version been committed to fix bugs.)
+  Ver := "0.1.7"  // Version
+  Rev := "b"      // Revision (how many times has this version been committed to fix bugs.)
 
   // Just exit with a message if we're running with no arguments.
   if(len(os.Args) < 2) {
