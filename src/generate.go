@@ -7,6 +7,7 @@ import (
   "strings"
   "sync"
   "strconv"
+  "os"
 )
 
 type ObjData struct {
@@ -89,7 +90,23 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   for _, file := range files {
     if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
       if ( file.IsDir() ) { // if it's a directory...
-        // Add one to the waitgroup, and start the goroutine for that subdir.
+
+        // Check for symlinks
+        fi, err := os.Lstat(path + "/" + file.Name())
+        if err != nil { console.Error(err); return; }
+      	if fi.Mode() & os.ModeSymlink == os.ModeSymlink {
+          // if is a symlink
+          realPath, err := os.Readlink(path + "/" + file.Name())
+           // if the realpath is not contained within the webroot...
+           // AND if we're jailing
+           // This shouldn't run IF unjail is set to true
+          if ( !(strings.HasPrefix(realPath, *opts.Args.Webroot) && !(*opts.Args.Unjail)){
+            // Abort this file.
+            continue
+          }
+      	}
+        // If we've made it this far, it must be a legal folder or symlink.
+
         wg.Add(1)
         console.Ilog("Spawning new goroutine for subdir ", path + "/" + file.Name())
         go GenerateAsync(path + "/" + file.Name(), wg, semaphore)
@@ -118,6 +135,21 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
     if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
       tmp = opts.ItemTemplate
       if (!file.IsDir()) { // not a dir, must be file
+        // Check for symlinks
+        fi, err := os.Lstat(path + "/" + file.Name())
+        if err != nil { console.Error(err); return; }
+        if fi.Mode() & os.ModeSymlink == os.ModeSymlink {
+          // if is a symlink
+          realPath, err := os.Readlink(path + "/" + file.Name())
+           // if the realpath is not contained within the webroot...
+           // AND if we're jailing
+           // This shouldn't run IF unjail is set to true
+          if ( !(strings.HasPrefix(realPath, *opts.Args.Webroot) && !(*opts.Args.Unjail)){
+            // Abort this file.
+            continue
+          }
+        }
+        
         regen := true
         if !(*opts.Args.Force) {
           fHash := HashFile(path + "/" + file.Name())
@@ -135,6 +167,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         }
 
         if (regen) {
+          console.Log("Regenerating " + path + "/" + file.Name())
           fHash := HashFile(path + "/" + file.Name())
 
           tmp = SubTag(tmp, opts.Conf.Tag_class, "icon file")
@@ -215,37 +248,3 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
   console.Ilog(MemUsage() + "Bucket:" + strconv.Itoa(len(gdx.Bucket)) + " " + "Loc=PostGenDir:" + path)
 } // END func GenerateAsync
-
-
-// Generates root step from path.
-func GenRootStep(path string) string {
-  split := strings.Split(path, "/")
-  if (len(split) <= 1) {
-    return "."
-  } else {
-    var step bytes.Buffer
-    step.WriteString(".")
-    for i := 0; i < (len(split)-1); i++ {
-  		step.WriteString("/..")
-  	}
-    return step.String()
-  }
-}
-
-func GenBreadCrumb(path string) string {
-  pathSlice := strings.Split(path, "/")
-  var breadCrumb bytes.Buffer
-  //crumbSep := "<a class='smaller' href='#'> > </a>"
-  crumbItem := "<a class='breadcrumb' href='$crumbAddr$'> $name$ </a>"
-
-  for _, crumb := range pathSlice {
-    // First do crumbname
-    if (crumb == ".") {
-      breadCrumb.WriteString(strings.Replace(crumbItem, "$name$", "", -1))
-    } else {
-      breadCrumb.WriteString(strings.Replace(crumbItem, "$name$", "", -1))
-    }
-    // now crumb's link address
-  }
-  return "BREADCRUMB WIP"
-}

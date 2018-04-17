@@ -203,24 +203,49 @@ func WriteFile(path string, data []byte, perm os.FileMode) error {
   }
 }
 
-/* https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
-func printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-    """
-    if iteration >= total:
-        pass
-    else:
-        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-        filledLength = int(length * iteration // total)
-        bar = fill * filledLength + '-' * (length - filledLength)
-        print('\r%s [%s] %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
-*/
+// Generates root step from path.
+func GenRootStep(path string) string {
+  split := strings.Split(path, "/")
+  if (len(split) <= 1) {
+    return "."
+  } else {
+    var step bytes.Buffer
+    step.WriteString(".")
+    for i := 0; i < (len(split)-1); i++ {
+  		step.WriteString("/..")
+  	}
+    return step.String()
+  }
+}
+
+func GenBreadCrumb(path string) string {
+    pathS := strings.Split(path, "/")
+    breadCrumb := ""
+    crumbAddr := ""
+    crumbSep := `<a class="smaller" href="#"> > </a>`
+    crumbItem := `<a class="smaller" href="$addr$">$name$</a>`
+    for index, crumb := range pathS {
+        // First do crumbname
+        if crumb == "." {
+          breadCrumb += strings.Replace(crumbItem, "$name$", "", -1)
+        } else {
+            breadCrumb += strings.Replace(crumbItem, "$name$", strings.Trim(crumb, "./"), -1)
+        }
+
+        // Then crumb's link address
+        if path == "." {
+          crumbAddr = `#`
+        } else {
+          for i:=0; i < (len(pathS) - index+1); i++ { crumbAddr += (`../`) }
+            crumbAddr += `./`
+        }
+
+        breadCrumb += strings.Replace(breadCrumb, "$addr$", crumbAddr, -1)
+
+        // If is not last item in list, append >
+        if crumb != pathS[len(pathS)-1] {
+          breadCrumb += crumbSep
+        }
+    }
+  return breadCrumb
+}
