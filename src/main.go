@@ -29,6 +29,8 @@ var console *LogObject
 
 var noWrite bool = true // if true, will prevent *actually* writing files
 
+var TimeNow string
+
 func main() {
   // Time program execution
   start := time.Now()

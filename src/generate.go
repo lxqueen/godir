@@ -9,6 +9,7 @@ import (
 )
 
 type ObjData struct {
+  Name string
   Hash string
   Html string
 }
@@ -39,12 +40,13 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
     return
   }
 
-  // Load dir.gdx, and deserialize it into a filename:hash slice.
-  // This way, if the name changes, it re generates, and if the contents change, it also regens.
-  idx, err := LoadGdx(path)
+  // Load dir.gdx into a database wrapper object
+  gdx, err := NewGdxTable(path)
   if (err != nil) {
-    console.Error("JSON Unmarshal Error: ", err)
+    console.Error("Error getting GDX table: ", err)
   }
+  defer gdx.Close()
+
   console.Ilog(MemUsage() + "Loc=IDXLoaded:" + path)
 
   // This holds a path (e.g. "../../") that leads to the root of the file directory.
@@ -84,10 +86,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   // iterate over every file & dir in the directory.
   for _, file := range files {
     if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
-      console.Ilog(MemUsage() + "Loc=PreGenFile:" + path + "/" + file.Name())
-
       tmp = opts.ItemTemplate
-      fileRec := map[string]interface{}{}
       if ( file.IsDir() ) { // if it's a directory...
         // Add one to the waitgroup, and start the goroutine for that subdir.
         wg.Add(1)
@@ -110,15 +109,20 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         }
 
       } else { // not a dir, must be file
-        // First check to see if the file has changed
-        changed := true // Default. In case we are forcing this will make it always generate.
-        if( !*opts.Args.Force ) { // if we're not forcing... (if we are forcing then theres no point in doing this)
-          fDat, err := LoadFile(path + "/" + file.Name())
-          if ( err != nil ) { console.Error("Unable to open file ", path + "/" + file.Name()) }
-          changed = RecordChanged(idx, path, file.Name(), fDat)
-        }
+        fHash := HashFile(path + "/" + file.Name())
 
-        if (changed || *opts.Args.Force) {
+        regen := true;
+        // If the name is already in the DB
+        if (gdx.ExistsName(file.Name())){
+          entry, err := gdx.GetAllName(file.Name())
+          if err != nil {
+            console.Error("An error occured while querying the GDX table")
+            // Continue with regen = true
+          }
+          // If the retrieved entry's hash does not match the current hash...
+          if entry[0].Hash == fHash { regen = false }
+        }
+        if (regen || *opts.Args.Force) {
           tmp = SubTag(tmp, opts.Conf.Tag_class, "icon file")
           tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon file-icon")
           tmp = SubTag(tmp, opts.Conf.Tag_filesize, FileSizeCount(file.Size()))
@@ -126,7 +130,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
           tmp = SubTag(tmp, opts.Conf.Tag_last_modified, file.ModTime().Format("2006-01-02 15:04:05"))
           tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name())
 
-          idx[file.Name()] = ObjData{ Hash: HashFile(path + "/" + file.Name()), Html: tmp } // Re-set the appropriate fields, since we've changed something.
+          gdx.Insert( ObjData{ Name: file.Name(), Hash: fHash, Html: tmp  }) // Re-set the appropriate fields, since we've changed something.
           // Append the composed item to file.
           err = AppendFile(path + "/" + *opts.Args.Filename, []byte(tmp))
           if err != nil {
@@ -135,7 +139,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
           }
         } else {// If it hasn't changed, and we're not forcing, just use the existing html.
           // Append the composed item to file.
-          err = AppendFile(path + "/" + *opts.Args.Filename, []byte(idx[file.Name()].Html))
+          //err = AppendFile(path + "/" + *opts.Args.Filename, []byte(idx[file.Name()].Html))
           if err != nil {
             console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
             return
@@ -143,6 +147,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         }
 
         // Add in record for file searching.
+        fileRec := make(map[string]string)
         fileRec["size"] = FileSizeCount(file.Size())
         fileRec["path"] = path + "/" + file.Name()
         fileRec["lastmodified"] = file.ModTime().Format("2006-01-02 15:04:05")
@@ -154,6 +159,8 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
           console.Error(err)
           continue
         }
+
+        // We are naively appending the JSON string to the file WITHOUT opening it to save memory.
         err = AppendFile("./include/files.json", append([]byte(", "), jdata...) )
         if (err != nil) {
           console.Error(err)
@@ -187,17 +194,6 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
     return
   }
 
-  // Also, write in the dir.gdx file, for skipDirs
-  data, err := json.Marshal(idx)
-  if (err != nil) {
-    console.Error("Unable to write to ", path, "/dir.gdx : ", err)
-    return
-  }
-  err = WriteFile(path + "/dir.gdx", data, 0644)
-  if (err != nil) {
-    console.Error("Unable to write to ", path, "/dir.gdx : ", err)
-    return
-  }
   console.Ilog(MemUsage() + "Loc=PostGenDir:" + path)
 } // END func GenerateAsync
 
@@ -233,33 +229,4 @@ func GenBreadCrumb(path string) string {
     // now crumb's link address
   }
   return "BREADCRUMB WIP"
-}
-
-func RecordChanged(idx map[string]ObjData, path string, fName string, fDat []byte) bool {
-  record, exists := idx[fName]
-  if ( exists ) {
-    console.Ilog("File ", path + "/" + fName, " not in dir.gdx.")
-    return true
-  }
-  if ( (HashFile(path + "/" + fName) == record.Hash) ) { // if it's unchanged...
-    console.Ilog("File ", path + "/" + fName, " unchanged.")
-    return false
-  } else { // if it doesn't match, it's been changed.
-    console.Ilog("File ", path + "/" + fName, " changed.")
-    return true
-  }
-}
-
-func LoadGdx(path string) (map[string]ObjData, error) {
-  idx := map[string]ObjData{}
-  idxRaw, err := LoadFile(path + "/dir.gdx")
-  if (err != nil) {
-    // This can fail silently since all it means is we don't have a dir.gdx yet.
-    return idx, nil
-  }
-  err = json.Unmarshal(idxRaw, &idx) // unmarshal file contents into idx
-  if (err != nil) {
-    return idx, err
-  }
-  return idx, nil
 }

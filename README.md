@@ -12,6 +12,7 @@ This program is a golang rewrite of [pydir](https://github.com/montessquio/pydir
 
 # Requirements
  - GO compiler and tools.
+ - GCC
 
 # Usage
 
