@@ -1,4 +1,4 @@
-.PHONY: clean test testrun
+.PHONY: clean test testrun install
 
 all:
 	@# Build
@@ -12,6 +12,9 @@ all:
 
 	go build -o "./out/godir" ./src/*.go
 	@echo "Done"
+
+install:
+	@cp ./out/godir /usr/local/bin/godir || echo "Make install must be run as root."
 
 clean:
 	rm -rf ./out

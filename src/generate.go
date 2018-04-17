@@ -6,6 +6,7 @@ import (
   "bytes"
   "strings"
   "sync"
+  "strconv"
 )
 
 type ObjData struct {
@@ -31,7 +32,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
 
   console.Log("Generating for ", path)
-  console.Ilog(MemUsage() + "Loc=DirPreload:" + path)
+  console.Ilog(MemUsage() + " " + "Loc=DirPreload:" + path)
 
   // Get a list of files and directories in PATH
   files, err := ioutil.ReadDir(path)
@@ -47,7 +48,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   }
   defer gdx.Close()
 
-  console.Ilog(MemUsage() + "Loc=IDXLoaded:" + path)
+  console.Ilog(MemUsage() + "Bucket:" + strconv.Itoa(len(gdx.Bucket)) + " " + "Loc=IDXLoaded:" + path)
 
   // This holds a path (e.g. "../../") that leads to the root of the file directory.
   rootStep := GenRootStep(path)
@@ -83,10 +84,10 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
     return
   }
 
-  // iterate over every file & dir in the directory.
+  // now iterate over each dir and spawn it's goroutine
+  // we do this in it's own loop so they start right away
   for _, file := range files {
     if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
-      tmp = opts.ItemTemplate
       if ( file.IsDir() ) { // if it's a directory...
         // Add one to the waitgroup, and start the goroutine for that subdir.
         wg.Add(1)
@@ -94,6 +95,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         go GenerateAsync(path + "/" + file.Name(), wg, semaphore)
 
         // Sub in tags
+        tmp = opts.ItemTemplate
         tmp = SubTag(tmp, opts.Conf.Tag_class, "icon dir")
         tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon dir-icon")
         tmp = SubTag(tmp, opts.Conf.Tag_filesize, FileSizeCount(DirSize(path + "/" + file.Name())))
@@ -107,22 +109,34 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
           console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
           return
         }
+      }
+    }
+  }
 
-      } else { // not a dir, must be file
-        fHash := HashFile(path + "/" + file.Name())
+  // iterate over every file & dir in the directory.
+  for _, file := range files {
+    if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
+      tmp = opts.ItemTemplate
+      if (!file.IsDir()) { // not a dir, must be file
+        regen := true
+        if !(*opts.Args.Force) {
+          fHash := HashFile(path + "/" + file.Name())
 
-        regen := true;
-        // If the name is already in the DB
-        if (gdx.ExistsName(file.Name())){
-          entry, err := gdx.GetAllName(file.Name())
-          if err != nil {
-            console.Error("An error occured while querying the GDX table")
-            // Continue with regen = true
+          // If the name is already in the DB
+          if (gdx.ExistsName(file.Name())){
+            entry, err := gdx.GetAllName(file.Name())
+            if err != nil {
+              console.Error("An error occured while querying the GDX table: ", err)
+              // Continue with regen = true
+            }
+            // If the retrieved entry's hash does not match the current hash...
+            if entry[0].Hash == fHash { regen = false }
           }
-          // If the retrieved entry's hash does not match the current hash...
-          if entry[0].Hash == fHash { regen = false }
         }
-        if (regen || *opts.Args.Force) {
+
+        if (regen) {
+          fHash := HashFile(path + "/" + file.Name())
+
           tmp = SubTag(tmp, opts.Conf.Tag_class, "icon file")
           tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon file-icon")
           tmp = SubTag(tmp, opts.Conf.Tag_filesize, FileSizeCount(file.Size()))
@@ -130,7 +144,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
           tmp = SubTag(tmp, opts.Conf.Tag_last_modified, file.ModTime().Format("2006-01-02 15:04:05"))
           tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name())
 
-          gdx.Insert( ObjData{ Name: file.Name(), Hash: fHash, Html: tmp  }) // Re-set the appropriate fields, since we've changed something.
+          gdx.Insert( ObjData{ Name: file.Name(), Hash: fHash, Html: tmp  } ) // Re-set the appropriate fields, since we've changed something.
           // Append the composed item to file.
           err = AppendFile(path + "/" + *opts.Args.Filename, []byte(tmp))
           if err != nil {
@@ -139,7 +153,12 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
           }
         } else {// If it hasn't changed, and we're not forcing, just use the existing html.
           // Append the composed item to file.
-          //err = AppendFile(path + "/" + *opts.Args.Filename, []byte(idx[file.Name()].Html))
+          objl, err := gdx.GetAllName(file.Name())
+          if err != nil {
+            console.Error("Unable to get page item from GDX : ", err)
+            return
+          }
+          err = AppendFile(path + "/" + *opts.Args.Filename, []byte(objl[0].Html))
           if err != nil {
             console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
             return
@@ -169,7 +188,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
       } // END if/else IsDir()
     } // END if ( !(StringInSlice(f.Name(), opts.Conf.Excludes) ) )
 
-    console.Ilog(MemUsage() + "Loc=PostGenFile:" + path + "/" + file.Name())
+    console.Ilog(MemUsage() + "Bucket:" + strconv.Itoa(len(gdx.Bucket)) + " " + "Loc=PostGenFile:" + path + "/" + file.Name())
   } // END for _, file := range files
 
 
@@ -182,7 +201,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
 
   // Now write the page footer to the actual file.
-  err = WriteFile(path + "/" + *opts.Args.Filename, []byte(page), 0644)
+  err = AppendFile(path + "/" + *opts.Args.Filename, []byte(page))
   if err != nil {
     console.Error("Unable to write page file ", *opts.Args.Filename, " : ", err)
     return
@@ -194,7 +213,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
     return
   }
 
-  console.Ilog(MemUsage() + "Loc=PostGenDir:" + path)
+  console.Ilog(MemUsage() + "Bucket:" + strconv.Itoa(len(gdx.Bucket)) + " " + "Loc=PostGenDir:" + path)
 } // END func GenerateAsync
 
 
