@@ -10,6 +10,8 @@ import (
   "errors"
   "fmt"
   "encoding/hex"
+  "bytes"
+  "strings"
 )
 
 type FileAsyncOutput struct {
@@ -221,31 +223,32 @@ func GenRootStep(path string) string {
 func GenBreadCrumb(path string) string {
     pathS := strings.Split(path, "/")
     breadCrumb := ""
-    crumbAddr := ""
-    crumbSep := `<a class="smaller" href="#"> > </a>`
-    crumbItem := `<a class="smaller" href="$addr$">$name$</a>`
+    crumbSep := `<a class="smaller breadcrumb" href="#"> / </a>`
+    crumbItem := `<a class="breadcrumb" href="$addr$">$name$</a>`
     for index, crumb := range pathS {
-        // First do crumbname
-        if crumb == "." {
-          breadCrumb += strings.Replace(crumbItem, "$name$", "", -1)
-        } else {
-            breadCrumb += strings.Replace(crumbItem, "$name$", strings.Trim(crumb, "./"), -1)
-        }
+      crumbTmp := ""
+      crumbAddr := ""
+      // First do crumbname
+      if crumb == "." {
+        crumbTmp = strings.Replace(crumbItem, "$name$", "", -1)
+      } else {
+        crumbTmp = strings.Replace(crumbItem, "$name$", strings.Trim(crumb, "./"), -1)
+      }
 
-        // Then crumb's link address
-        if path == "." {
-          crumbAddr = `#`
-        } else {
-          for i:=0; i < (len(pathS) - index+1); i++ { crumbAddr += (`../`) }
-            crumbAddr += `./`
-        }
+      // Then crumb's link address
+      if path == "." {
+        crumbAddr = `#`
+      } else {
+        for i:=0; i < index; i++ { crumbAddr += (`../`) }
+          crumbAddr += `./`
+      }
 
-        breadCrumb += strings.Replace(breadCrumb, "$addr$", crumbAddr, -1)
+      breadCrumb += strings.Replace(crumbTmp, "$addr$", crumbAddr, -1)
 
-        // If is not last item in list, append >
-        if crumb != pathS[len(pathS)-1] {
-          breadCrumb += crumbSep
-        }
+      // If is not last item in list, append >
+      if crumb != pathS[len(pathS)-1] {
+        breadCrumb += crumbSep
+      }
     }
   return breadCrumb
 }

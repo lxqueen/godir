@@ -3,7 +3,6 @@ package main
 import (
   "encoding/json"
   "io/ioutil"
-  "bytes"
   "strings"
   "sync"
   "strconv"
@@ -64,7 +63,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   page = SubTag(page, opts.Conf.Tag_root_dir, path)
   page = SubTag(page, opts.Conf.Tag_domain, opts.Conf.Domain)
   page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
-  err = WriteFile(path + "/" + *opts.Args.Filename, []byte(opts.ThemeHeader), 0644)
+  err = WriteFile(path + "/" + *opts.Args.Filename, []byte(page), 0644)
   if err != nil {
     console.Error("Unable to write page header to file ", *opts.Args.Filename, " : ", err)
     return
@@ -93,14 +92,15 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
         // Check for symlinks
         fi, err := os.Lstat(path + "/" + file.Name())
-        if err != nil { console.Error(err); return; }
+        if err != nil { console.Error(err); }
       	if fi.Mode() & os.ModeSymlink == os.ModeSymlink {
           // if is a symlink
           realPath, err := os.Readlink(path + "/" + file.Name())
+          if err != nil { console.Error(err) }
            // if the realpath is not contained within the webroot...
            // AND if we're jailing
            // This shouldn't run IF unjail is set to true
-          if ( !(strings.HasPrefix(realPath, *opts.Args.Webroot) && !(*opts.Args.Unjail)){
+          if ( !(strings.HasPrefix(realPath, *opts.Args.Webroot) && !(*opts.Args.Unjail) ) ) {
             // Abort this file.
             continue
           }
@@ -141,15 +141,16 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         if fi.Mode() & os.ModeSymlink == os.ModeSymlink {
           // if is a symlink
           realPath, err := os.Readlink(path + "/" + file.Name())
+          if err != nil { console.Error(err) }
            // if the realpath is not contained within the webroot...
            // AND if we're jailing
            // This shouldn't run IF unjail is set to true
-          if ( !(strings.HasPrefix(realPath, *opts.Args.Webroot) && !(*opts.Args.Unjail)){
+          if ( !(strings.HasPrefix(realPath, *opts.Args.Webroot) && !(*opts.Args.Unjail) ) ) {
             // Abort this file.
             continue
           }
         }
-        
+
         regen := true
         if !(*opts.Args.Force) {
           fHash := HashFile(path + "/" + file.Name())
@@ -237,12 +238,6 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   err = AppendFile(path + "/" + *opts.Args.Filename, []byte(page))
   if err != nil {
     console.Error("Unable to write page file ", *opts.Args.Filename, " : ", err)
-    return
-  }
-  // Append the footer item to file.
-  err = AppendFile(path + "/" + *opts.Args.Filename, []byte(opts.ThemeFooter))
-  if err != nil {
-    console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
     return
   }
 
