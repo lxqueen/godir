@@ -1,4 +1,4 @@
-.PHONY: clean test testrun install
+.PHONY: clean test install
 
 all:
 	@# Build
@@ -10,7 +10,8 @@ all:
 	go get github.com/mattn/go-sqlite3
 	@go install github.com/mattn/go-sqlite3
 
-	go build -o "./out/godir" ./src/*.go
+	@echo "go build -o \"./out/godir\""
+	@go build -o "./out/godir" ./src/*.go || echo "Build Failed"
 	@echo "Done"
 
 install:
@@ -18,10 +19,8 @@ install:
 
 clean:
 	rm -rf ./out
-	rm ./src/dir.gdx
+	rm ./src/gdx.db
+	@echo "Done"
 
-testrun:
-	out/godir -v -c ./src/config.toml.example ./test
-
-test:
+test: all
 	go test ./...
