@@ -32,17 +32,17 @@ func TestGdxFunctionality(t *testing.T) {
 
   fmt.Println("-> Attempting to get nonexistent value")
   objs, err := db.GetAll("201912187")
-  if (db.Exists("201912187")) { t.Error( "Nonexistent value exists: " + err.Error() )}
+  if (db.ExistsName("201912187")) { t.Error( "Nonexistent value exists: " + err.Error() )}
 
-  dat := ObjData{Name:"customValue", Hash:"201912187", Html:`I am definitely HT&amp;ML\\`}
+  dat := ObjData{Name:"201912187", Hash:"qwiuy4gfi4y3y", Html:`I am definitely HT&amp;ML\\`}
 
   fmt.Println("-> Inserting value")
   err = db.Insert(dat)
   if err != nil { t.Error("There was a problem when inserting objdata: " + err.Error() ) }
 
   fmt.Println("-> Checking for newly inserted value")
-  objs, err = db.GetAll(dat.Hash)
-  if !(db.Exists(dat.Hash)) { t.Error( "Existing value does not exist: " + err.Error() )}
+  objs, err = db.GetAllName(dat.Hash)
+  if !(db.ExistsName(dat.Name)) { t.Error( "Existing value does not exist: " + err.Error() )}
 
   datJ, err := json.Marshal(dat)
   objJ, err := json.Marshal(objs[0])

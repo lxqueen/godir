@@ -161,6 +161,5 @@ func (r GdxTable) Flush() {
 
 // Closes the database. This must be called at the end of use or deferred.
 func (r GdxTable) Close() {
-  r.Flush()
   r.DB.Close()
 }
