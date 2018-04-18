@@ -63,6 +63,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   page = SubTag(page, opts.Conf.Tag_root_dir, path)
   page = SubTag(page, opts.Conf.Tag_domain, opts.Conf.Domain)
   page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
+  page = SubTag(page, opts.Conf.Tag_sidenav, sideNav)
   err = WriteFile(path + "/" + *opts.Args.Filename, []byte(page), 0644)
   if err != nil {
     console.Error("Unable to write page header to file ", *opts.Args.Filename, " : ", err)
@@ -233,6 +234,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   page = SubTag(page, opts.Conf.Tag_root_dir, path)
   page = SubTag(page, opts.Conf.Tag_domain, opts.Conf.Domain)
   page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
+  page = SubTag(page, opts.Conf.Tag_sidenav, sideNav)
 
   // Now write the page footer to the actual file.
   err = AppendFile(path + "/" + *opts.Args.Filename, []byte(page))

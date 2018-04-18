@@ -205,7 +205,6 @@ func WriteFile(path string, data []byte, perm os.FileMode) error {
   }
 }
 
-// Generates root step from path.
 func GenRootStep(path string) string {
   split := strings.Split(path, "/")
   if (len(split) <= 1) {
@@ -251,4 +250,9 @@ func GenBreadCrumb(path string) string {
       }
     }
   return breadCrumb
+}
+
+
+func GenSidenav() (string, error) {
+
 }

@@ -153,13 +153,19 @@ func main() {
   // Loop through workpath and count how much we have to process.
 
   // The async function is insanely fast.
+  /*
   console.Log("Counting objects...")
   timer = time.Now()
   outChan := make(chan int)
   go DirTreeCountAsync(opts.Args.WorkPath, opts.Conf.Excludes, outChan)
   memberCount := <- outChan
   console.Log("Found ", memberCount, " objects in ", time.Since(timer))
+  */
 
+  // Generate the sidenav...
+  console.Log("Beginning sidenav generation")
+  sideNav = GenSidenav()
+  
   /*
 
     MAIN PROGRAM START
