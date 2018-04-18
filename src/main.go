@@ -166,11 +166,17 @@ func main() {
 
   */
   console.Ilog("Performing static substitutions...")
-  // Sub and write the page header
+  // Sub and write the searchText header
   themeTmp := strings.Split(SubTag(string(themeRaw), opts.Conf.Tag_domain, opts.Conf.Domain), opts.Conf.Tag_contents) // Split at the contents tag to make a distinct header and footer.
   opts.ThemeHeader = themeTmp[0]
   opts.ThemeFooter = themeTmp[len(themeTmp)-1]
   searchText := SubTag(string(searchRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
+  searchText = SubTag(searchText, opts.Conf.Tag_root_step, "./")
+  searchText = SubTag(searchText, opts.Conf.Tag_breadcrumb, " / Search")
+  searchText = SubTag(searchText, opts.Conf.Tag_root_dir, "./")
+  searchText = SubTag(searchText, opts.Conf.Tag_domain, opts.Conf.Domain)
+  searchText = SubTag(searchText, opts.Conf.Tag_root_step, "./")
+  searchText = SubTag(searchText, opts.Conf.Tag_sidenav, sideNav)
   opts.ItemTemplate = SubTag(string(itemRaw), opts.Conf.Tag_domain, opts.Conf.Domain)
   console.Ilog("Theme text sum: " + HashBytes([]byte(opts.ThemeHeader + opts.ThemeFooter)))
   console.Ilog("Search text sum: " + HashBytes([]byte(searchText)))
