@@ -72,7 +72,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   // Add in the "../" item before we generate any real items.
   tmp := opts.ItemTemplate
   tmp = SubTag(tmp, opts.Conf.Tag_class, "icon dir")
-  tmp = SubTag(tmp, opts.Conf.Tag_file_href, "../")
+  tmp = SubTag(tmp, opts.Conf.Tag_file_href, "../" + *opts.Args.Filename)
   tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon dir-icon")
   tmp = SubTag(tmp, opts.Conf.Tag_filename, "Parent Directory")
   tmp = SubTag(tmp, opts.Conf.Tag_last_modified, "-")
@@ -118,7 +118,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         tmp = SubTag(tmp, opts.Conf.Tag_filesize, FileSizeCount(DirSize(path + "/" + file.Name())))
         tmp = SubTag(tmp, opts.Conf.Tag_filename, file.Name())
         tmp = SubTag(tmp, opts.Conf.Tag_last_modified, file.ModTime().Format("2006-01-02 15:04:05"))
-        tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name())
+        tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name() + "/" + *opts.Args.Filename)
 
         // Append the composed item to file.
         err = AppendFile(path + "/" + *opts.Args.Filename, []byte(tmp))
