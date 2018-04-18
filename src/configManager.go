@@ -83,8 +83,12 @@ func ReadArgs() Arguments {
   flag.Parse()
 
   tail := flag.Args()
-  if (len(tail) == 0) {
+  if (len(tail) == 0 && *args.Version == false) {
     fmt.Println("No workpath supplied. Use the `-h` flag for help.")
+  } else if ( *args.Version ) {
+      fmt.Println("godir V." + Ver + Rev)
+      fmt.Println("\ngodir is Licensed under the GNU GPL v3.\nCode copyright (c) 2018 Nicolas \"Montessquio\" Suarez.")
+      os.Exit(0)
   } else {
     args.WorkPath = tail[0]
     index, err := indexOf(tail, args.WorkPath)

@@ -29,7 +29,11 @@ var console *LogObject
 
 var noWrite bool = false // if true, will prevent *actually* writing files
 
-var TimeNow string
+var sideNav string  // Contains the sideNav string.
+                    // This is generated beforehand used in the generation goroutines.
+
+var Ver string = "0.2.1"  // Version
+var Rev string = ""      // Revision (how many times has this version been committed to fix bugs.)
 
 func main() {
   // Time program execution
@@ -39,9 +43,6 @@ func main() {
   // https://reddit.com/r/golang/comments/290znn/goroutine_crazy_memory_usage
   runtime.GOMAXPROCS( runtime.NumCPU() )
 
-
-  Ver := "0.1.7"  // Version
-  Rev := "b"      // Revision (how many times has this version been committed to fix bugs.)
 
   // Just exit with a message if we're running with no arguments.
   if(len(os.Args) < 2) {
@@ -59,13 +60,6 @@ func main() {
   opts = GenOpts{}
   opts.Args = ReadArgs()
   opts.Conf = ReadConfig(*opts.Args.ConfigFile)
-
-  // --version output
-  if ( *opts.Args.Version ) {
-    fmt.Println("godir V." + Ver + Rev)
-    fmt.Println("\ngodir is Licensed under the GNU GPL v3.\nCode copyright (c) 2018 Nicolas \"Montessquio\" Suarez.")
-    os.Exit(0)
-  }
 
   // func Logger(level int, sendILogs bool, quiet bool, oFile string) *_logger
   console = Logger(2, *opts.Args.Verbose, *opts.Args.Quiet, "")
