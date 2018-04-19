@@ -164,8 +164,8 @@ func main() {
 
   // Generate the sidenav...
   console.Log("Beginning sidenav generation")
-  sideNav = GenSidenav()
-  
+  GenSidenav(opts.Args.WorkPath, 0, 0)
+
   /*
 
     MAIN PROGRAM START
