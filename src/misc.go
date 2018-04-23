@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type FileAsyncOutput struct {
@@ -126,7 +125,7 @@ func DirTreeCountAsync(path string, excludes []string, out chan int) {
 
 	// Now actually delve into subdirs recursively
 	for _, f := range files {
-		if !f.IsDir() && !StringInSlice(f.Name(), excludes) {
+		if f.IsDir() && !StringInSlice(f.Name(), excludes) {
 			go DirTreeCountAsync(path+"/"+f.Name(), excludes, childChan)
 		}
 		count++
@@ -248,7 +247,7 @@ func GenBreadCrumb(path string) string {
 		if path == "." {
 			crumbAddr = `#`
 		} else {
-			for i := 0; i < index; i++ {
+			for i := index; i > 0; i-- {
 				crumbAddr += (`../`)
 			}
 			crumbAddr += `./`
@@ -274,74 +273,62 @@ func GenSidenav(path string, indent int, streak int) { // Indent and streak need
 		return
 	}
 
+	// Loop over every file...
 	for _, p := range files {
+		// Only consider files that are not in the excludes list.
 		if !(StringInSlice(p.Name(), opts.Conf.Excludes)) {
-			// Remove symlinks if they leave the webroot
+			// First, compare config information with any symlinks we may encounter
+			// Check for symlinks
 			fi, err := os.Lstat(path + "/" + p.Name())
-			if err != nil {
-				console.Error(err)
-			}
-			if fi.Mode()&os.ModeSymlink == os.ModeSymlink {
+			if err != nil { console.Error(err); continue; }
+			if fi.Mode() & os.ModeSymlink == os.ModeSymlink {
 				// if is a symlink
 				realPath, err := os.Readlink(path + "/" + p.Name())
-				if err != nil {
-					console.Error(err)
-				}
-				// if the realpath is not contained within the webroot...
-				// AND if we're jailing
-				// This shouldn't run IF unjail is set to true
-				if !(strings.HasPrefix(realPath, *opts.Args.Webroot) && !(*opts.Args.Unjail)) {
+				if err != nil { console.Error(err); continue; }
+				 // if the realpath is not contained within the webroot...
+				 // AND if we're jailing
+				 // This shouldn't run IF unjail is set to true
+				if ( !(strings.HasPrefix(realPath, *opts.Args.Webroot) && !(*opts.Args.Unjail) ) ) {
 					// Abort this file.
 					continue
 				}
 			}
 
-			// If we've made it this far, it must be a legal folder or symlink.
-			fullpath := path + "/" + p.Name()
-
-			// Check to see if the folder is empty and hide the chevron if it is (replace it with the folder icon)
-			isEmpty := true
+			// If we've gotten this far, then it must either be a regular item or a VALID symlink according to the conf
+			// Now, let's check to see if it's a directory or not, since that will change what we want to do.
 			if p.IsDir() {
-				files, err := ioutil.ReadDir(fullpath)
+				// If it's a directory, we first need to see if it's empty or not, to put the chevron on those that are filled.
+				isEmpty := true
+				files, err := ioutil.ReadDir(path + "/" + p.Name())
 				if err != nil {
-					console.Error("Error reading contents of ", fullpath, " : ", err)
+					console.Error("Error reading contents of ", path, " : ", err)
 					continue
 				}
-				for _, subd := range files {
-					if subd.IsDir() {
-						isEmpty = false
-					}
-				}
+				// If we got something other than zero files, Empty = false
+				if len(files) != 0 { isEmpty = false }
 
-				// Chevron UID generation
-				rand.Seed(time.Now().Unix()) // initialize global pseudo random generator
-				choices := `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz`
 				uid := ""
-				for i := 0; i < 8; i++ {
-					uid += string(choices[rand.Intn(len(choices))])
-				}
-				console.Ilog("CSS UID for item " + p.Name() + " is " + uid)
-				// Handle some css magic for the dropdowns.
-				// Not the nicest thing but it works.
-				// I need to dynamically write styles here to make use of the button hack
-				if !isEmpty {
-					sideNav += (`<li class="pure-menu-item" style="padding-left: ` + strconv.Itoa(indent*10) + `px"><div class="side-checkbox"><input type="checkbox" onclick="dropdown(this)" id="collapse_` + uid + `"/><label class="list-collapsed-icon" for="collapse_` + uid + `" id="chevron_` + uid + `"></label></div><div class="side-content" id="a1"><a href="$root-step$/` + string(fullpath) + `" class="pure-menu-link">` + string(p.Name()) + `</a></div>`)
-					sideNav += (`<ul class="pure-menu-list"></ul>`) //This is here to fix an issue regarding display:none, where it would randomly indent following elements.
-					//It guarantees there's one element underneath the li(s), and secures the indentation.
-					sideNav += (`<ul class="pure-menu-list default-hidden" id="` + uid + `">`) // This is the "real" <ul> to hold the subcontent, if at all.
-				} else {
-					sideNav += (`<li class="pure-menu-item" style="padding-left: ` + strconv.Itoa(indent*10) + `px"><div class="side-checkbox"><input type="checkbox" id="collapse_` + uid + `"/><label class="list-collapsed-icon" for="collapse_` + uid + `" id="chevron_` + uid + `"></label></div><div class="side-content" id="a1"><a href="$root-step$/` + string(fullpath) + `" class="pure-menu-link">` + string(p.Name()) + `</a></div>`)
-					sideNav += (`<ul class="pure-menu-list" id="` + uid + `">`)
-				}
-				GenSidenav(fullpath, indent+1, streak+1)
-				sideNav += ("</ul>")
+				choices := strings.Split("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", "")
+				for i:= 0; i<8; i++ { uid += choices[rand.Intn(len(choices))] }
 
-				if isEmpty { // If there are no subfolders, switch the chevron for the folder icon
-					sideNav += (`<style>#chevron_` + uid + `{background-image:url(/include/images/fallback/folder.png);background-size:70%;background-position:right center}</style>`)
-					console.Ilog("Working Dir is Empty. Removing Chevron")
+
+				// Set up some values real quick
+				fullpath := path + "/" + p.Name()
+				ident := strconv.Itoa(indent * 10)
+				// if is not empty
+				if !isEmpty {
+					sideNav += `<li class="pure=-menu-item" style="padding-left:` + ident + `px"><div class="side-checkbox"><input type="checkbox" onclick="dropdown(this)" id="collapse_` + uid + `"/><label class="list-collapsed-icon" for="collapse_` + uid + `" id="chevron_` + uid + `"></label></div><div class="side-content" id="a1"><a href="$root-step$/` + fullpath+ `" class="pure-menu-link">` + p.Name() + `</a></div>` + `<ul class="pure-menu-list"></ul>` + `<ul class="pure-menu-list default-hidden" id="` + uid + `">`
+				} else {
+					sideNav += `<li class="pure-menu-item" style="padding-left: ` + ident + `px"><div class="side-checkbox"><input type="checkbox" id="collapse_` + uid + `"/><label class="list-collapsed-icon" for="collapse_` + uid + `" id="chevron_` + uid + `"></label></div><div class="side-content" id="a1"><a href="$root-step$/` + fullpath + `" class="pure-menu-link">` + p.Name() + `</a></div>` + `<ul class="pure-menu-list" id="` + uid + `">`
 				}
-				sideNav += (`</li>`)
-			}
-		}
-	}
-}
+        GenSidenav(fullpath, indent+1, streak+1) // Will not write anything if it's empty
+        sideNav += "</ul>"
+
+	      if isEmpty { // If there are no subfolders, switch the chevron for the folder icon
+	          sideNav += `<style>#chevron_` + uid + `{background-image:url(/include/images/fallback/folder.png);background-size:70%;background-position:right center}</style>`
+	          console.Ilog("Working Dir is Empty. Removing Chevron")
+					}
+			} // END if p.IsDir()
+		} // END if !(StringInSlice)
+	} // END for _, p := range files
+} // END GenSideNav()

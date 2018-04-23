@@ -162,9 +162,25 @@ func main() {
   console.Log("Found ", memberCount, " objects in ", time.Since(timer))
   */
 
+
+  console.Log("Copying includes from ", opts.Conf.Include_path, " to ", opts.Args.WorkPath + "/")
+  var err error
+  if (noWrite) {
+    err = nil
+  } else {
+    err = copy.Copy(opts.Conf.Include_path, opts.Args.WorkPath)
+  }
+  if (err != nil) {
+    console.Fatal(err)
+  }
+
+  err = os.Chdir(opts.Args.WorkPath) // We are now in the workpath, and can use "." to refer to the current location.
+  if (err != nil) { console.Fatal(err.Error()) }
+
+
   // Generate the sidenav...
   console.Log("Beginning sidenav generation")
-  GenSidenav(opts.Args.WorkPath, 0, 0)
+  GenSidenav(".", 0, 0)
 
   /*
 
@@ -188,26 +204,11 @@ func main() {
   console.Ilog("Search text sum: " + HashBytes([]byte(searchText)))
   console.Ilog("Item text sum: " + HashBytes([]byte(opts.ItemTemplate)))
 
-
-  console.Log("Copying includes from ", opts.Conf.Include_path, " to ", opts.Args.WorkPath + "/")
-  var err error
-  if (noWrite) {
-    err = nil
-  } else {
-    err = copy.Copy(opts.Conf.Include_path, opts.Args.WorkPath)
-  }
-  if (err != nil) {
-    console.Fatal(err)
-  }
-
   console.Log("Copying search.html from ", opts.Conf.SearchTemplate, " to ", opts.Args.WorkPath + "/search.html")
-  err = WriteFile(opts.Args.WorkPath + "/search.html", []byte(searchText), 0644)
+  err = WriteFile("./search.html", []byte(searchText), 0644)
   if (err != nil) {
     console.Fatal(err)
   }
-
-  err = os.Chdir(opts.Args.WorkPath) // We are now in the workpath, and can use "." to refer to the current location.
-  if (err != nil) { console.Fatal(err.Error()) }
 
   console.Log("Generating objects...")
   timer = time.Now()
