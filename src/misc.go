@@ -305,7 +305,13 @@ func GenSidenav(path string, indent int, streak int) { // Indent and streak need
 					continue
 				}
 				// If we got something other than zero files, Empty = false
-				if len(files) != 0 { isEmpty = false }
+				// Loop through all files in the directory. If at least one of them is a directory, break and set isEmpty to false
+				for _, item := range files {
+					if item.IsDir() {
+						isEmpty = false
+						break
+					}
+				}
 
 				uid := ""
 				choices := strings.Split("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", "")
