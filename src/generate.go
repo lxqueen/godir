@@ -2,19 +2,11 @@ package main
 
 import (
   "encoding/json"
-  "io/ioutil"
   "strings"
+  "io/ioutil"
   "sync"
-  "strconv"
   "os"
 )
-
-type ObjData struct {
-  Name string
-  Hash string
-  Html string
-}
-
 
 // Recursive generate async.
 func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
@@ -33,23 +25,46 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
   console.Log("Generating for ", path)
   console.Ilog(MemUsage() + " " + "Loc=DirPreload:" + path)
-
-  // Get a list of files and directories in PATH
-  files, err := ioutil.ReadDir(path)
-  if (err != nil) {
-    console.Error("Error reading contents of ", path, " : ", err)
-    return
+  
+  // If we need to re-generate the directory...
+  if HasChanged(path) || *opts.Args.Force {
+    regen(path, wg, semaphore)
+  } else { // if we don't need to regenerate it then simply delve into subfolders.
+    files, err := ioutil.ReadDir(path)
+    if err != nil { console.Error("Error reading contents of ", path, " when in main generation routine. Error: ", err.Error) }
+    for _, file := range files {
+      if ( !InExcludes(file.Name()) ) { // If the current item isn't in excludes...
+        if ( file.IsDir() ) { // if it's a directory...
+          // Check for symlinks
+          fi, err := os.Lstat(path + "/" + file.Name())
+          if err != nil { console.Error(err); }
+          if fi.Mode() & os.ModeSymlink == os.ModeSymlink {
+            // if is a symlink
+            realPath, err := os.Readlink(path + "/" + file.Name())
+            if err != nil { console.Error(err) }
+             // if the realpath is not contained within the webroot...
+             // AND if we're jailing
+             // This shouldn't run IF unjail is set to true
+            if ( !(strings.HasPrefix(realPath, *opts.Args.Webroot) && !(*opts.Args.Unjail) ) ) {
+              // Abort this file.
+              continue
+            }
+          }
+          // If we've made it this far, it must be a legal folder or symlink.
+  
+          wg.Add(1)
+          console.Ilog("Spawning new goroutine for subdir ", path + "/" + file.Name())
+          go GenerateAsync(path + "/" + file.Name(), wg, semaphore)
+        } // END if file.IsDir()
+      } // END if !InExcludes(file.Name())
+    } // END for _, file := range files
+  
   }
+  
+} // END func GenerateAsync
 
-  // Load dir.gdx into a database wrapper object
-  gdx, err := NewGdxTable(path)
-  if (err != nil) {
-    console.Error("Error getting GDX table: ", err)
-  }
-  defer gdx.Close()
-
-  console.Ilog(MemUsage() + "Bucket:" + strconv.Itoa(len(gdx.Bucket)) + " " + "Loc=IDXLoaded:" + path)
-
+// Re-generates the index file at the given path.
+func regen(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   // This holds a path (e.g. "../../") that leads to the root of the file directory.
   rootStep := GenRootStep(path)
 
@@ -64,7 +79,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   page = SubTag(page, opts.Conf.Tag_root_dir, path)
   page = SubTag(page, opts.Conf.Tag_domain, opts.Conf.Domain)
   page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
-  err = WriteFile(path + "/" + *opts.Args.Filename, []byte(page), 0644)
+  err := WriteFile(path + "/" + *opts.Args.Filename, []byte(page), 0644)
   if err != nil {
     console.Error("Unable to write page header to file ", *opts.Args.Filename, " : ", err)
     return
@@ -79,6 +94,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   tmp = SubTag(tmp, opts.Conf.Tag_last_modified, "-")
   tmp = SubTag(tmp, opts.Conf.Tag_filesize, "-")
 
+  // Append the ../ item to the output file.
   err = AppendFile(path + "/" + *opts.Args.Filename, []byte(tmp))
   if err != nil {
     console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
@@ -87,10 +103,11 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
   // now iterate over each dir and spawn it's goroutine
   // we do this in it's own loop so they start right away
+  files, err := ioutil.ReadDir(path)
+  if err != nil { console.Error("Error reading contents of ", path, " when in main generation routine. Error: ", err.Error) }
   for _, file := range files {
-    if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
+    if ( !InExcludes(file.Name()) ) { // If the current item isn't in excludes...
       if ( file.IsDir() ) { // if it's a directory...
-
         // Check for symlinks
         fi, err := os.Lstat(path + "/" + file.Name())
         if err != nil { console.Error(err); }
@@ -112,7 +129,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         console.Ilog("Spawning new goroutine for subdir ", path + "/" + file.Name())
         go GenerateAsync(path + "/" + file.Name(), wg, semaphore)
 
-        // Sub in tags
+        // Generate the entry for this single item (directory).
         tmp = opts.ItemTemplate
         tmp = SubTag(tmp, opts.Conf.Tag_class, "icon dir")
         tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon dir-icon")
@@ -127,103 +144,68 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
           console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
           return
         }
-      }
-    }
-  }
+      } // END if file.IsDir()
+    } // END if !InExcludes(file.Name())
+  } // END for _, file := range files
 
-  // iterate over every file & dir in the directory.
+  // Now iterate over files only.
   for _, file := range files {
-    if ( !(StringInSlice(file.Name(), opts.Conf.Excludes) ) ) { // If the current item isn't in excludes...
+    if ( !InExcludes(file.Name()) && !file.IsDir() ) { // If the current item isn't in excludes, and it's not a directory
       tmp = opts.ItemTemplate
-      if (!file.IsDir()) { // not a dir, must be file
-        // Check for symlinks
-        fi, err := os.Lstat(path + "/" + file.Name())
-        if err != nil { console.Error(err); return; }
-        if fi.Mode() & os.ModeSymlink == os.ModeSymlink {
-          // if is a symlink
-          realPath, err := os.Readlink(path + "/" + file.Name())
-          if err != nil { console.Error(err) }
-           // if the realpath is not contained within the webroot...
-           // AND if we're jailing
-           // This shouldn't run IF unjail is set to true
-          if ( !(strings.HasPrefix(realPath, *opts.Args.Webroot) && !(*opts.Args.Unjail) ) ) {
-            // Abort this file.
-            continue
-          }
-        }
 
-        regen := true
-        if !(*opts.Args.Force) {
-          fHash := HashFile(path + "/" + file.Name())
-
-          // If the name is already in the DB
-          if (gdx.ExistsName(file.Name())){
-            entry, err := gdx.GetAllName(file.Name())
-            if err != nil {
-              console.Error("An error occured while querying the GDX table: ", err)
-              // Continue with regen = true
-            }
-            // If the retrieved entry's hash does not match the current hash...
-            if entry[0].Hash == fHash { regen = false }
-          }
-        }
-
-        if (regen) {
-          console.Log("Regenerating " + path + "/" + file.Name())
-          fHash := HashFile(path + "/" + file.Name())
-
-          tmp = SubTag(tmp, opts.Conf.Tag_class, "icon file")
-          tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon file-icon")
-          tmp = SubTag(tmp, opts.Conf.Tag_filesize, FileSizeCount(file.Size()))
-          tmp = SubTag(tmp, opts.Conf.Tag_filename, file.Name())
-          tmp = SubTag(tmp, opts.Conf.Tag_last_modified, file.ModTime().Format("2006-01-02 15:04:05"))
-          tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name())
-
-          gdx.Insert( ObjData{ Name: file.Name(), Hash: fHash, Html: tmp  } ) // Re-set the appropriate fields, since we've changed something.
-          // Append the composed item to file.
-          err = AppendFile(path + "/" + *opts.Args.Filename, []byte(tmp))
-          if err != nil {
-            console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
-            return
-          }
-        } else {// If it hasn't changed, and we're not forcing, just use the existing html.
-          // Append the composed item to file.
-          objl, err := gdx.GetAllName(file.Name())
-          if err != nil {
-            console.Error("Unable to get page item from GDX : ", err)
-            return
-          }
-          err = AppendFile(path + "/" + *opts.Args.Filename, []byte(objl[0].Html))
-          if err != nil {
-            console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
-            return
-          }
-        }
-
-        // Add in record for file searching.
-        fileRec := make(map[string]string)
-        fileRec["size"] = FileSizeCount(file.Size())
-        fileRec["path"] = path + "/" + file.Name()
-        fileRec["lastmodified"] = file.ModTime().Format("2006-01-02 15:04:05")
-        fileRec["name"] = file.Name()
-
-        console.Ilog("Marshalling ", path + "/" + file.Name(), " to include/files.json")
-        jdata, err := json.Marshal(fileRec)
-        if (err != nil) {
-          console.Error(err)
+      // Check for symlinks
+      fi, err := os.Lstat(path + "/" + file.Name())
+      if err != nil { console.Error(err); return; }
+      if fi.Mode() & os.ModeSymlink == os.ModeSymlink {
+        // if is a symlink
+        realPath, err := os.Readlink(path + "/" + file.Name())
+        if err != nil { console.Error(err) }
+          // if the realpath is not contained within the webroot...
+          // AND if we're jailing
+          // This shouldn't run IF unjail is set to true
+        if ( !(strings.HasPrefix(realPath, *opts.Args.Webroot) && !(*opts.Args.Unjail) ) ) {
+          // Abort this file.
           continue
         }
+      }
 
-        // We are naively appending the JSON string to the file WITHOUT opening it to save memory.
-        err = AppendFile("./include/files.json", append([]byte(", "), jdata...) )
-        if (err != nil) {
-          console.Error(err)
-          continue
-        }
-      } // END if/else IsDir()
-    } // END if ( !(StringInSlice(f.Name(), opts.Conf.Excludes) ) )
+      tmp = SubTag(tmp, opts.Conf.Tag_class, "icon file")
+      tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon file-icon")
+      tmp = SubTag(tmp, opts.Conf.Tag_filesize, FileSizeCount(file.Size()))
+      tmp = SubTag(tmp, opts.Conf.Tag_filename, file.Name())
+      tmp = SubTag(tmp, opts.Conf.Tag_last_modified, file.ModTime().Format("2006-01-02 15:04:05"))
+      tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name())
 
-    console.Ilog(MemUsage() + "Bucket:" + strconv.Itoa(len(gdx.Bucket)) + " " + "Loc=PostGenFile:" + path + "/" + file.Name())
+      // Append the composed item to file.
+      err = AppendFile(path + "/" + *opts.Args.Filename, []byte(tmp))
+      if err != nil {
+        console.Error("Unable to append page item to file ", *opts.Args.Filename, " : ", err)
+        return
+      }
+      
+      // Add in record for file searching.
+      fileRec := make(map[string]string)
+      fileRec["size"] = FileSizeCount(file.Size())
+      fileRec["path"] = path + "/" + file.Name()
+      fileRec["lastmodified"] = file.ModTime().Format("2006-01-02 15:04:05")
+      fileRec["name"] = file.Name()
+
+      console.Ilog("Marshalling ", path + "/" + file.Name(), " to include/files.json")
+      jdata, err := json.Marshal(fileRec)
+      if (err != nil) {
+        console.Error(err)
+        continue
+      }
+
+      // We are naively appending the JSON string to the file WITHOUT opening it to save memory.
+      err = AppendFile("./include/files.json", append([]byte(", "), jdata...) )
+      if (err != nil) {
+        console.Error(err)
+        continue
+      }
+    } // END exclude check && make sure it's a file.
+
+    console.Ilog(MemUsage() + " Loc=PostGenFile:" + path + "/" + file.Name())
   } // END for _, file := range files
 
 
@@ -243,5 +225,5 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
     return
   }
 
-  console.Ilog(MemUsage() + "Bucket:" + strconv.Itoa(len(gdx.Bucket)) + " " + "Loc=PostGenDir:" + path)
-} // END func GenerateAsync
+  console.Ilog(MemUsage() + " Loc=PostGenDir:" + path)
+}

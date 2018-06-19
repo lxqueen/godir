@@ -27,7 +27,7 @@ var opts GenOpts
 // Global console object for debugging and log output.
 var console *LogObject
 
-var noWrite bool = true // if true, will prevent *actually* writing files
+var noWrite bool = false // if true, will prevent *actually* writing files
 
 var sideNav string  // Contains the sideNav string.
                     // This is generated beforehand used in the generation goroutines.

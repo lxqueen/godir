@@ -1,8 +1,8 @@
 # Theme template paths. These must be modified appropriately.
-themeTemplate  = "./rsc/themeTemplate.html"
-searchTemplate = "./rsc/searchTemplate.html"
-itemTemplate   = "./rsc/itemTemplate.html"
-include_path   = "./rsc/include"
+themeTemplate  = "../rsc/themeTemplate.html"
+searchTemplate = "../rsc/searchTemplate.html"
+itemTemplate   = "../rsc/itemTemplate.html"
+include_path   = "../rsc/include"
 
 # Change which tags godir will look for. If you're using a pre-made theme, leave these at their defaults.
 tag_contents   = "$content$"
@@ -24,20 +24,15 @@ follow_symlinks = false
 # These files will be completely ignored by godir.
 # The defaults include godir-generated files and directories and should probably not be touched.
 use_regex = true # Set to false to disable regex parsing on excludes.
+
+# These default excludes probably shouldn't be touched unless you know what you're doing.
 excludes = [
-    "lib",
-    "app.py",
     "rsc",
     ".git",
     "include",
     "index.html",
-    "directory.html",
     "search.html",
-    ".git",
-    "dir.idx",
-    "dir.gdx",
-    "gdx.db",
-    "gdx.db-journal"
+    ".gdx",
 ]
 
 

@@ -46,7 +46,7 @@ func UpdateGdx(path string) {
   if err != nil { console.Error("Error reading contents of ", path, " when checking GDX hash. Error: ", err.Error) }
 
   var fileSum bytes.Buffer
-  // Concat all the files together.
+  // Now concat all the files together.
   for _, file := range files {
     fileSum.WriteString(file.Name())
   }
