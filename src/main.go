@@ -32,7 +32,7 @@ var noWrite bool = false // if true, will prevent *actually* writing files
 var sideNav string  // Contains the sideNav string.
                     // This is generated beforehand used in the generation goroutines.
 
-var Ver string = "0.2.1"  // Version
+var Ver string = "0.2.2"  // Version
 var Rev string = ""      // Revision (how many times has this version been committed to fix bugs.)
 
 func main() {

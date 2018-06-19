@@ -8,43 +8,44 @@ import (
 )
 
 type Config struct {
-	ThemeTemplate  string
-  SearchTemplate string
-  ItemTemplate   string
-  Include_path   string
+	ThemeTemplate     string
+  SearchTemplate    string
+  ItemTemplate      string
+  Include_path      string
 
-  Tag_contents   string
-  Tag_class      string
-  Tag_file_href  string
-  Tag_item_type  string
-  Tag_root_step  string
-  Tag_domain     string
-  Tag_root_dir   string
-  Tag_sidenav    string
-  Tag_breadcrumb string
-  Tag_filename   string
+  Tag_contents      string
+  Tag_class         string
+  Tag_file_href     string
+  Tag_item_type     string
+  Tag_root_step     string
+  Tag_domain        string
+  Tag_root_dir      string
+  Tag_sidenav       string
+  Tag_breadcrumb    string
+  Tag_filename      string
   Tag_last_modified string
-  Tag_filesize   string
+  Tag_filesize      string
 
-  Follow_symlinks bool
-  Excludes      []string
-  Domain        string
+  Follow_symlinks   bool
+  Use_regex          bool
+  Excludes          []string
+  Domain            string
 }
 
 type Arguments struct {
-  Verbose   *bool
-  Version   *bool
-  Quiet     *bool
-  SuperQuiet *bool
-  Force     *bool
-  Webroot   *string
-  Unjail    *bool
-  Filename  *string
-  Sort      *bool
+  Verbose     *bool
+  Version     *bool
+  Quiet       *bool
+  SuperQuiet  *bool
+  Force       *bool
+  Webroot     *string
+  Unjail      *bool
+  Filename    *string
+  Sort        *bool
   MaxRoutines *int
-  ConfigFile *string
-  WorkPath  string
-  Tail      []string
+  ConfigFile  *string
+  WorkPath    string
+  Tail        []string
 }
 
 // Reads info from config file.

@@ -23,6 +23,7 @@ follow_symlinks = false
 
 # These files will be completely ignored by godir.
 # The defaults include godir-generated files and directories and should probably not be touched.
+use_regex = true # Set to false to disable regex parsing on excludes.
 excludes = [
     "lib",
     "app.py",
