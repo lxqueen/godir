@@ -2,10 +2,8 @@ package main
 
 import (
 	"bytes"
-	"encoding/hex"
 	"errors"
-	"fmt"
-	"github.com/kalafut/imohash"
+	"github.com/cespare/xxhash"
 	"io/ioutil"
 	"math"
 	"math/rand"
@@ -14,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"regexp"
+	"fmt"
 )
 
 type FileAsyncOutput struct {
@@ -115,7 +114,7 @@ func DirTreeCountAsync(path string, out chan int) {
 	subdirs := 0
 	// First count the amount of subfiles.
 	for _, f := range files {
-		if !f.IsDir() && !InExcludes(p.Name()) {
+		if !f.IsDir() && !InExcludes(f.Name()) {
 			subdirs++
 		} // only count those that aren't directories and aren't in excludes
 	}
@@ -125,7 +124,7 @@ func DirTreeCountAsync(path string, out chan int) {
 
 	// Now actually delve into subdirs recursively
 	for _, f := range files {
-		if f.IsDir() && !InExcludes(p.Name()) {
+		if f.IsDir() && !InExcludes(f.Name()) {
 			go DirTreeCountAsync(path+"/"+f.Name(), childChan)
 		}
 		count++
@@ -139,16 +138,7 @@ func DirTreeCountAsync(path string, out chan int) {
 }
 
 func HashBytes(data []byte) string {
-	sum := imohash.Sum(data)
-	return hex.EncodeToString(sum[:16])
-}
-
-func HashFile(path string) string {
-	sum, err := imohash.SumFile(path)
-	if err != nil {
-		fmt.Println("[ERR] ", err)
-	}
-	return hex.EncodeToString(sum[:16])
+	return fmt.Sprintf("%X", xxhash.Sum64(data))
 }
 
 // Function to safely and abstractly load template files.
@@ -206,6 +196,7 @@ func AppendFile(filename string, data []byte) error {
 	}
 }
 
+// Will clobber current contents.
 func WriteFile(path string, data []byte, perm os.FileMode) error {
 	if noWrite {
 		return nil
@@ -341,13 +332,13 @@ func GenSidenav(path string, indent int, streak int) { // Indent and streak need
 
 // IsInExcludes returns true if the given text string matches an exclude.
 func InExcludes(text string) bool {
-	if opts.conf.Use_regex { // Use Regex
-		for _, rule := range opts.conf.Excludes {
+	if opts.Conf.Use_regex { // Use Regex
+		for _, rule := range opts.Conf.Excludes {
 			match, _ := regexp.MatchString(rule, text)
 			if match { return match }
 		}
-		return match // If it's a hit, then it'll exit earlier. Otherwise, it will be false
+		return false
 	} else { // Don't use regex.
-		return (StringInSlice(p.Name(), opts.Conf.Excludes))
+		return StringInSlice(text, opts.Conf.Excludes)
 	}
 }
