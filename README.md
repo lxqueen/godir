@@ -46,7 +46,7 @@ Usage of out/godir:
 Godir is configured in two places: in `config.toml` (below) and using command line options (above).
 
 
-The default godir config file is a (TOML)[https://github.com/toml-lang/toml] file.
+The default godir config file is a [TOML](https://github.com/toml-lang/toml) file.
 
 By default godir looks in `$HOME/.config/godir/config.toml`. You may specify a different TOML file to use with the `-c` flag. You can find a sample config file in `src/config.toml.example`.
 
