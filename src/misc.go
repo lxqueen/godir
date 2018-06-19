@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"regexp"
 )
 
 type FileAsyncOutput struct {
@@ -108,14 +109,13 @@ func DirTreeCount(path string) int {
 	return counter
 }
 
-// Add excludes to this eventually
-func DirTreeCountAsync(path string, excludes []string, out chan int) {
+func DirTreeCountAsync(path string, out chan int) {
 	files, _ := ioutil.ReadDir(path)
 	count := 0
 	subdirs := 0
-	// First count the amount of subdirectories.
+	// First count the amount of subfiles.
 	for _, f := range files {
-		if !f.IsDir() && !StringInSlice(f.Name(), excludes) {
+		if !f.IsDir() && !InExcludes(p.Name()) {
 			subdirs++
 		} // only count those that aren't directories and aren't in excludes
 	}
@@ -125,8 +125,8 @@ func DirTreeCountAsync(path string, excludes []string, out chan int) {
 
 	// Now actually delve into subdirs recursively
 	for _, f := range files {
-		if f.IsDir() && !StringInSlice(f.Name(), excludes) {
-			go DirTreeCountAsync(path+"/"+f.Name(), excludes, childChan)
+		if f.IsDir() && !InExcludes(p.Name()) {
+			go DirTreeCountAsync(path+"/"+f.Name(), childChan)
 		}
 		count++
 	}
@@ -276,7 +276,7 @@ func GenSidenav(path string, indent int, streak int) { // Indent and streak need
 	// Loop over every file...
 	for _, p := range files {
 		// Only consider files that are not in the excludes list.
-		if !(StringInSlice(p.Name(), opts.Conf.Excludes)) {
+		if ( !InExcludes(p.Name())/* If the filename is not in the excludes list...*/ ) {
 			// First, compare config information with any symlinks we may encounter
 			// Check for symlinks
 			fi, err := os.Lstat(path + "/" + p.Name())
@@ -338,3 +338,16 @@ func GenSidenav(path string, indent int, streak int) { // Indent and streak need
 		} // END if !(StringInSlice)
 	} // END for _, p := range files
 } // END GenSideNav()
+
+// IsInExcludes returns true if the given text string matches an exclude.
+func InExcludes(text string) bool {
+	if opts.conf.Use_regex { // Use Regex
+		for _, rule := range opts.conf.Excludes {
+			match, _ := regexp.MatchString(rule, text)
+			if match { return match }
+		}
+		return match // If it's a hit, then it'll exit earlier. Otherwise, it will be false
+	} else { // Don't use regex.
+		return (StringInSlice(p.Name(), opts.Conf.Excludes))
+	}
+}
