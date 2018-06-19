@@ -27,7 +27,7 @@ var opts GenOpts
 // Global console object for debugging and log output.
 var console *LogObject
 
-var noWrite bool = false // if true, will prevent *actually* writing files
+var noWrite bool = true // if true, will prevent *actually* writing files
 
 var sideNav string  // Contains the sideNav string.
                     // This is generated beforehand used in the generation goroutines.
@@ -68,21 +68,7 @@ func main() {
 
   if ( *opts.Args.Verbose ) { // AKA test mode.
     console.Ilog("The following Args were Parsed:")
-    /*
-    fmt.Printf("Verbose %t\n", *args.Verbose)
-    fmt.Printf("Version %t\n", *args.Version)
-    fmt.Printf("Quiet %t\n", *args.Quiet)
-    fmt.Printf("SQuiet %t\n", *args.SuperQuiet)
-    fmt.Printf("Force %t\n", *args.Force)
-    fmt.Printf("Webroot %q\n", *args.Webroot)
-    fmt.Printf("Unjail %t\n", *args.Unjail)
-    fmt.Printf("Filename %q\n", *args.Filename)
-    fmt.Printf("Sort %t\n", *args.Sort)
-    fmt.Printf("oFile %q\n", *args.OutFile)
-    fmt.Printf("cfgFile %q\n", *args.ConfigFile)
-    fmt.Printf("workPath %q\n", args.WorkPath)
-    fmt.Printf("tail: %q\n", args.Tail)
-    */
+  
     data, err := json.Marshal(opts.Args)
     if err != nil { console.Fatal(err.Error()) }
     fmt.Printf("%s\n", data)
@@ -112,8 +98,11 @@ func main() {
   timer := time.Now() // Timer
 
   go LoadFileAsync(opts.Conf.ThemeTemplate, chanTheme)
+  console.Ilog("Loading file " + opts.Conf.ThemeTemplate)
   go LoadFileAsync(opts.Conf.SearchTemplate, chanSearch)
+  console.Ilog("Loading file " + opts.Conf.SearchTemplate)
   go LoadFileAsync(opts.Conf.ItemTemplate, chanItem)
+  console.Ilog("Loading file " + opts.Conf.ItemTemplate)
 
   // Receive, then verify, each template file.
   themeOut := <- chanTheme
@@ -142,27 +131,6 @@ func main() {
   console.Ilog("Search file sum: " + HashBytes([]byte(searchRaw)))
   console.Ilog("Item file sum: " + HashBytes([]byte(itemRaw)))
 
-
-  /*
-
-  CREATE PROGRESS BAR
-
-  */
-
-  // Change directory into workpath.
-  // Loop through workpath and count how much we have to process.
-
-  // The async function is insanely fast.
-  /*
-  console.Log("Counting objects...")
-  timer = time.Now()
-  outChan := make(chan int)
-  go DirTreeCountAsync(opts.Args.WorkPath, opts.Conf.Excludes, outChan)
-  memberCount := <- outChan
-  console.Log("Found ", memberCount, " objects in ", time.Since(timer))
-  */
-
-
   console.Log("Copying includes from ", opts.Conf.Include_path, " to ", opts.Args.WorkPath + "/")
   var err error
   if (noWrite) {
@@ -174,6 +142,8 @@ func main() {
     console.Fatal(err)
   }
 
+
+  // Change directory to the working path.
   err = os.Chdir(opts.Args.WorkPath) // We are now in the workpath, and can use "." to refer to the current location.
   if (err != nil) { console.Fatal(err.Error()) }
 
@@ -204,7 +174,7 @@ func main() {
   console.Ilog("Search text sum: " + HashBytes([]byte(searchText)))
   console.Ilog("Item text sum: " + HashBytes([]byte(opts.ItemTemplate)))
 
-  console.Log("Copying search.html from ", opts.Conf.SearchTemplate, " to ", opts.Args.WorkPath + "/search.html")
+  console.Log("Copying search.html from ", opts.Conf.SearchTemplate, " to ", opts.Args.WorkPath,  "/search.html")
   err = WriteFile("./search.html", []byte(searchText), 0644)
   if (err != nil) {
     console.Fatal(err)
@@ -212,9 +182,6 @@ func main() {
 
   console.Log("Generating objects...")
   timer = time.Now()
-
-  // Use this to start the bar: //bar.Start()
-  // Use barIncrement() to increase the bar
 
   // Create the files.json file in includes/
   err = WriteFile("./include/files.json", []byte("var jsonText = '["), 0644)
