@@ -27,7 +27,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   console.Ilog(MemUsage() + " " + "Loc=DirPreload:" + path)
   
   // If we need to re-generate the directory...
-  if HasChanged(path) || *opts.Args.Force {
+  if NeedsRegen(path) || *opts.Args.Force {
     regen(path, wg, semaphore)
   } else { // if we don't need to regenerate it then simply delve into subfolders.
     files, err := ioutil.ReadDir(path)
@@ -65,6 +65,9 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
 // Re-generates the index file at the given path.
 func regen(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
+  // We need to update the GDX table for the next run.
+  UpdateGdx(path)
+
   // This holds a path (e.g. "../../") that leads to the root of the file directory.
   rootStep := GenRootStep(path)
 
