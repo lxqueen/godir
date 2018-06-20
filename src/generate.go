@@ -106,8 +106,8 @@ func regen(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
     return
   }
 
-  // now iterate over each dir and spawn it's goroutine
-  // we do this in it's own loop so they start right away
+  // now iterate over each dir and spawn its goroutine
+  // we do this in its own loop so they start right away
   files, err := ioutil.ReadDir(path)
   if err != nil { console.Error("Error reading contents of ", path, " when in main generation routine. Error: ", err.Error) }
   for _, file := range files {

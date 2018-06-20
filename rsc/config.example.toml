@@ -17,6 +17,7 @@ tag_breadcrumb = "$breadcrumb$"
 tag_filename   = "$filename$"
 tag_last_modified = "$last-modified$"
 tag_filesize   = "$filesize$"
+tag_title      = "$title$"
 
 # Should godir follow symlinks? This may cause security issues.
 follow_symlinks = false
@@ -37,3 +38,4 @@ excludes = [
 
 
 domain = "localhost" # Set this to your domain name.
+title = "My Title" # Set this to the title you want to appear in your website.
