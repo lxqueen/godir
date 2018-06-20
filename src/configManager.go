@@ -14,7 +14,6 @@ type Config struct {
   Include_path      string
 
   Tag_contents      string
-  Tag_class         string
   Tag_file_href     string
   Tag_item_type     string
   Tag_root_step     string

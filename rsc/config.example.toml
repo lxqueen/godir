@@ -6,7 +6,6 @@ include_path   = "../rsc/include"
 
 # Change which tags godir will look for. If you're using a pre-made theme, leave these at their defaults.
 tag_contents   = "$content$"
-tag_class      = "$class$"
 tag_file_href  = "$file-href$"
 tag_item_type  = "$item-type$"
 tag_root_step  = "$root-step$"
