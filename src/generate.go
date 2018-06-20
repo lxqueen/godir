@@ -76,7 +76,7 @@ func regen(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   page = SubTag(page, opts.Conf.Tag_sidenav, sideNav)
   page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
   page = SubTag(page, opts.Conf.Tag_breadcrumb, breadCrumb)
-  if path = "." {
+  if path == "." {
     page = SubTag(page, opts.Conf.Tag_root_dir, opts.Conf.Domain)
   } else {
     page = SubTag(page, opts.Conf.Tag_root_dir, path)
@@ -219,7 +219,7 @@ func regen(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   page = SubTag(page, opts.Conf.Tag_sidenav, sideNav)
   page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
   page = SubTag(page, opts.Conf.Tag_breadcrumb, breadCrumb)
-  if path = "." { 
+  if path == "." { 
     page = SubTag(page, opts.Conf.Tag_root_dir, opts.Conf.Domain) 
   } else {
     page = SubTag(page, opts.Conf.Tag_root_dir, path) 

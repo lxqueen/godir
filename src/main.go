@@ -59,7 +59,15 @@ func main() {
   // Load the args.
   opts = GenOpts{}
   opts.Args = ReadArgs()
-  opts.Conf = ReadConfig(*opts.Args.ConfigFile)
+  
+  if *opts.Args.SideBarOnly {
+    *opts.Args.Verbose = false
+    *opts.Args.Quiet = true
+  } else {
+    opts.Conf = ReadConfig(*opts.Args.ConfigFile)
+  }
+
+  
 
   // func Logger(level int, sendILogs bool, quiet bool, oFile string) *_logger
   console = Logger(2, *opts.Args.Verbose, *opts.Args.Quiet, "")
@@ -79,6 +87,14 @@ func main() {
     fmt.Printf("%s\n", data)
 
     console.Log("Loaded args and configs in " + time.Since(start).String())
+  }
+
+  if *opts.Args.SideBarOnly {
+    err := os.Chdir(opts.Args.WorkPath)
+    if (err != nil) { console.Fatal(err.Error()) }
+    GenSidenav(".", 0, 0)
+    fmt.Print(sideNav)
+    os.Exit(0)
   }
 
   /*
@@ -146,7 +162,7 @@ func main() {
   // Change directory to the working path.
   err = os.Chdir(opts.Args.WorkPath) // We are now in the workpath, and can use "." to refer to the current location.
   if (err != nil) { console.Fatal(err.Error()) }
-
+  
 
   // Generate the sidenav...
   console.Log("Beginning sidenav generation")

@@ -47,7 +47,7 @@ type Arguments struct {
   MaxRoutines *int
   ConfigFile  *string
   WorkPath    string
-  SideBarOnly *string
+  SideBarOnly *bool
   Tail        []string
 }
 
