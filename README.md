@@ -22,6 +22,7 @@ Here is the help program help message, when run with `-h` or `--help`. Please no
 ```
 Usage of out/godir:
   -F	Force: Force-regenerate all directories, even if no changes have been made.
+  -S  Outputs the sidebar HTML by itself to STDOUT and exits.
   -V	Version: Get program version and some extra info.
   -c string
     	Specify a file to use as the godir config. (default "/home/monty/.config/godir/config.toml")
