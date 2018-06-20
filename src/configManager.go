@@ -25,11 +25,13 @@ type Config struct {
   Tag_filename      string
   Tag_last_modified string
   Tag_filesize      string
+  Tag_title         string
 
   Follow_symlinks   bool
   Use_regex          bool
   Excludes          []string
   Domain            string
+  Title             string
 }
 
 type Arguments struct {
@@ -45,6 +47,7 @@ type Arguments struct {
   MaxRoutines *int
   ConfigFile  *string
   WorkPath    string
+  SideBarOnly *string
   Tail        []string
 }
 
@@ -80,6 +83,7 @@ func ReadArgs() Arguments {
   args.Filename   = flag.String("f", "index.html", "File: Manually set the name of the HTML file containing the directory listing.")
   args.Sort       = flag.Bool("s", false, "Sort: Sort directory entries alphabetically. Currently Unimplemented.")
   args.ConfigFile = flag.String("c", (os.Getenv("HOME") + "/.config/godir/config.toml"), "Specify a file to use as the godir config.")
+  args.SideBarOnly = flag.Bool("S", false, "Outputs the sidebar HTML by itself to stdout and nothing else.")
 
   flag.Parse()
 

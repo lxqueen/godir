@@ -78,6 +78,7 @@ func regen(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   page = SubTag(page, opts.Conf.Tag_breadcrumb, breadCrumb)
   page = SubTag(page, opts.Conf.Tag_root_dir, path)
   page = SubTag(page, opts.Conf.Tag_domain, opts.Conf.Domain)
+  page = SubTag(page, opts.Conf.Tag_title, opts.Conf.Title)
   page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
   err := WriteFile(path + "/" + *opts.Args.Filename, []byte(page), 0644)
   if err != nil {
@@ -216,6 +217,7 @@ func regen(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   page = SubTag(page, opts.Conf.Tag_breadcrumb, breadCrumb)
   page = SubTag(page, opts.Conf.Tag_root_dir, path)
   page = SubTag(page, opts.Conf.Tag_domain, opts.Conf.Domain)
+  page = SubTag(page, opts.Conf.Tag_title, opts.Conf.Title)
   page = SubTag(page, opts.Conf.Tag_root_step, rootStep)
 
   // Now write the page footer to the actual file.
