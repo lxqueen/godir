@@ -72,9 +72,8 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
   // Add in the "../" item before we generate any real items.
   tmp := opts.ItemTemplate
-  tmp = SubTag(tmp, opts.Conf.Tag_class, "icon dir")
   tmp = SubTag(tmp, opts.Conf.Tag_file_href, "../" + *opts.Args.Filename)
-  tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon dir-icon")
+  tmp = SubTag(tmp, opts.Conf.Tag_item_type, "dir")
   tmp = SubTag(tmp, opts.Conf.Tag_filename, "Parent Directory")
   tmp = SubTag(tmp, opts.Conf.Tag_last_modified, "-")
   tmp = SubTag(tmp, opts.Conf.Tag_filesize, "-")
@@ -114,8 +113,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
 
         // Sub in tags
         tmp = opts.ItemTemplate
-        tmp = SubTag(tmp, opts.Conf.Tag_class, "icon dir")
-        tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon dir-icon")
+        tmp = SubTag(tmp, opts.Conf.Tag_item_type, "dir")
         tmp = SubTag(tmp, opts.Conf.Tag_filesize, FileSizeCount(DirSize(path + "/" + file.Name())))
         tmp = SubTag(tmp, opts.Conf.Tag_filename, file.Name())
         tmp = SubTag(tmp, opts.Conf.Tag_last_modified, file.ModTime().Format("2006-01-02 15:04:05"))
@@ -172,8 +170,7 @@ func GenerateAsync(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
           console.Log("Regenerating " + path + "/" + file.Name())
           fHash := HashFile(path + "/" + file.Name())
 
-          tmp = SubTag(tmp, opts.Conf.Tag_class, "icon file")
-          tmp = SubTag(tmp, opts.Conf.Tag_item_type, "icon file-icon")
+          tmp = SubTag(tmp, opts.Conf.Tag_item_type, "file")
           tmp = SubTag(tmp, opts.Conf.Tag_filesize, FileSizeCount(file.Size()))
           tmp = SubTag(tmp, opts.Conf.Tag_filename, file.Name())
           tmp = SubTag(tmp, opts.Conf.Tag_last_modified, file.ModTime().Format("2006-01-02 15:04:05"))
