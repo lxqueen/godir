@@ -222,7 +222,8 @@ func regen(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
   if path == "." || path == "./" {
     page = SubTag(page, opts.Conf.Tag_root_dir, "")
   } else {
-    page = SubTag(page, opts.Conf.Tag_root_dir, path)
+    
+    page = SubTag(page, opts.Conf.Tag_root_dir, strings.TrimLeft(strings.TrimLeft(path, `./\`), `./\`))
   }
   page = SubTag(page, opts.Conf.Tag_domain, opts.Conf.Domain)
   page = SubTag(page, opts.Conf.Tag_title, opts.Conf.Title)
