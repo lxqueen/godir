@@ -54,6 +54,10 @@ input[type=checkbox]:checked+label {
   overflow-x: hidden;
 }
 
+.pure-menu-item .pure-menu-item {
+  padding-left: 20px;
+}
+
 .listing-table {
   width: 100%;
   border-left: 0;
