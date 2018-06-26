@@ -1,57 +1,59 @@
 .file-icon {
-  background: url("/include/images/fallback/file.png") left top no-repeat;
+  background: url("../images/fallback/file.png") left top no-repeat;
   background-position: center;
 }
 
 .dir-icon {
-  background: url("/include/images/fallback/folder.png") left top no-repeat;
+  background: url("../images/fallback/folder.png") left top no-repeat;
   background-position: center;
 }
 
 .up-icon {
-  background: url("/include/images/fallback/folder-parent.png") left top no-repeat;
+  background: url("../images/fallback/folder-parent.png") left top no-repeat;
   background-position: center;
 }
 
-input[type=checkbox] {
-display:none;
+.pure-menu-item > .side-checkbox > input[type=checkbox] {
+  display: none;
 }
 
-input[type=checkbox]+label {
-  background: url("/include/images/tree-indicator.svg") left top no-repeat;
-  background-position: center left 5px;
-  background-size: 100%;
-  height: 28px;
-  width: 28px;
+.pure-menu-item > .side-checkbox > input[type=checkbox] + label {
   display: inline-block;
-  padding: 0 0 0 0px;
-}
-
-input[type=checkbox]:checked+label {
-  background: url("/include/images/sort.svg") left center no-repeat;
-  background-position: center left 5px;
-  background-size: 100%;
+  padding: 0;
+  width: 24px;
   height: 28px;
-  width: 28px;
-  display: inline-block;
-  padding: 0 0 0 0px;
+  background: url("../images/fallback/folder.png") center center no-repeat;
+  background-size: 20px;
 }
 
+.pure-menu-item.has-children > .side-checkbox > input[type=checkbox] + label {
+  background-image: url("../images/tree-indicator.svg");
+  background-size: 24px;
+}
+
+.pure-menu-item.has-children > .side-checkbox > input[type=checkbox]:checked + label {
+  transform: rotate(90deg);
+}
 
 .side-checkbox {
   float: left;
 }
-.side-content {
-  padding-left: 10px;
+
+#menu a {
+  padding-left: 4px;
 }
 
 .pure-menu-link {
-  margin-left: 20px;
+  margin-left: 24px;
   font-size: 90%;
 }
 
 .pure-menu {
   overflow-x: hidden;
+}
+
+.pure-menu-item .pure-menu-item {
+  padding-left: 24px;
 }
 
 .listing-table {
@@ -152,7 +154,7 @@ footer a:visited {
 }
 
 .search-icon {
-  background: url("/include/images/search.svg") left top no-repeat;
+  background: url("../images/search.svg") left top no-repeat;
   background-position: center;
   padding-left: 50px;
   display: inline;
@@ -161,7 +163,7 @@ footer a:visited {
 }
 
 .search-icon:hover {
-  background: url("/include/images/search.svg") left top no-repeat;
+  background: url("../images/search.svg") left top no-repeat;
   background-position: center;
   padding-left: 50px;
   display: inline;
@@ -170,7 +172,7 @@ footer a:visited {
 }
 
 .search-icon:active {
-  background: url("/include/images/search.svg") left top no-repeat;
+  background: url("../images/search.svg") left top no-repeat;
   background-position: center;
   padding-left: 50px;5k
   display: inline;
