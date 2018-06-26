@@ -92,7 +92,7 @@ func main() {
   if *opts.Args.SideBarOnly {
     err := os.Chdir(opts.Args.WorkPath)
     if (err != nil) { console.Fatal(err.Error()) }
-    GenSidenav(".", 0, 0)
+    GenSidenav(".", 0)
     fmt.Print(sideNav)
     os.Exit(0)
   }
