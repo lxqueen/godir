@@ -6,6 +6,7 @@ import (
   "io/ioutil"
   "sync"
   "os"
+  "net/url"
 )
 
 // Recursive generate async.
@@ -142,7 +143,7 @@ func regen(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
         tmp = SubTag(tmp, opts.Conf.Tag_filesize, FileSizeCount(DirSize(path + "/" + file.Name())))
         tmp = SubTag(tmp, opts.Conf.Tag_filename, file.Name())
         tmp = SubTag(tmp, opts.Conf.Tag_last_modified, file.ModTime().Format("2006-01-02 15:04:05"))
-        tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name() + "/" + *opts.Args.Filename)
+        tmp = SubTag(tmp, opts.Conf.Tag_file_href, url.QueryEscape("./" + file.Name() + "/" + *opts.Args.Filename))
 
         // Append the composed item to file.
         err = AppendFile(path + "/" + *opts.Args.Filename, []byte(tmp))
@@ -179,7 +180,7 @@ func regen(path string, wg *sync.WaitGroup, semaphore chan struct{}) {
       tmp = SubTag(tmp, opts.Conf.Tag_filesize, FileSizeCount(file.Size()))
       tmp = SubTag(tmp, opts.Conf.Tag_filename, file.Name())
       tmp = SubTag(tmp, opts.Conf.Tag_last_modified, file.ModTime().Format("2006-01-02 15:04:05"))
-      tmp = SubTag(tmp, opts.Conf.Tag_file_href, "./" + file.Name())
+      tmp = SubTag(tmp, opts.Conf.Tag_file_href, url.QueryEscape("./" + file.Name()))
 
       // Append the composed item to file.
       err = AppendFile(path + "/" + *opts.Args.Filename, []byte(tmp))
