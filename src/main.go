@@ -166,7 +166,7 @@ func main() {
 
   // Generate the sidenav...
   console.Log("Beginning sidenav generation")
-  GenSidenav(".", 0, 0)
+  GenSidenav(".", 0)
 
   /*
 
