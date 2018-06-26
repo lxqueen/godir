@@ -86,11 +86,11 @@ Due to the way themes are made, it is possible to distribute themes as packages 
   - A: First, make sure the `FOLLOWSYMLINKS` option is set to true in the config file. If that doesn't work, then make sure you have set the proper webroot in `cfg.py` and there is no trailing slash `/` at the end of it. If you want the symlinks to go out of your set webroot, make sure the appropriate setting is also changed in the config.
 
 - Q: Can I use this for my commercial product/website without crediting you?
-  - A: Absolutely! There are a few requirements, though. First, this software must retain the MIT license, and whoever is using or modifying this software must adhere to it. Second, I am not liable for what this program does or what you do with it. Use it at your own risk.
+  - A: Absolutely! There are a few requirements, though. First, this software must retain the GPL license, and whoever is using or modifying this software must adhere to it. Second, I am not liable for what this program does or what you do with it. Use it at your own risk.
 
 - Q: Can I make this go faster? My machine is pretty powerful.
   - A: Yes. Use the `-m` flag to increase the amount of workers that can operate at once. The default is 100, and it is not reccommended to go beyond the limit of open file descriptors of your os. This is 1024 on linux systems. If it begins to crash refer to the next question.
-  
+
 - Q: It's crashing with tons of messages saying something about goroutines.
   - A: It's likely that the amount of threads running simultaneously is either hitting the file descriptor cap. You may also be running out of memory for the program to use. In either case, limit the amount of threads running at once using the `-m` flag. The default is 100.
 
