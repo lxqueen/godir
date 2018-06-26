@@ -313,17 +313,12 @@ func GenSidenav(path string, streak int) { // Streak needs to start at 0
 				fullpath := path + "/" + p.Name()
 				// if is not empty
 				if !isEmpty {
-					sideNav += `<li class="pure-menu-item"><div class="side-checkbox"><input type="checkbox" onclick="dropdown(this)" id="collapse_` + uid + `"/><label class="list-collapsed-icon" for="collapse_` + uid + `" id="chevron_` + uid + `"></label></div><div class="side-content" id="a1"><a href="$root-step$/` + fullpath+ `" class="pure-menu-link">` + p.Name() + `</a></div>` + `<ul class="pure-menu-list"></ul>` + `<ul class="pure-menu-list default-hidden" id="` + uid + `">`
+					sideNav += `<li class="pure-menu-item has-children"><div class="side-checkbox"><input type="checkbox" onclick="dropdown(this)" id="collapse_` + uid + `"/><label class="list-collapsed-icon" for="collapse_` + uid + `" id="chevron_` + uid + `"></label></div><div class="side-content" id="a1"><a href="$root-step$/` + fullpath+ `" class="pure-menu-link">` + p.Name() + `</a></div>` + `<ul class="pure-menu-list"></ul>` + `<ul class="pure-menu-list default-hidden" id="` + uid + `">`
 				} else {
 					sideNav += `<li class="pure-menu-item"><div class="side-checkbox"><input type="checkbox" id="collapse_` + uid + `"/><label class="list-collapsed-icon" for="collapse_` + uid + `" id="chevron_` + uid + `"></label></div><div class="side-content" id="a1"><a href="$root-step$/` + fullpath + `" class="pure-menu-link">` + p.Name() + `</a></div>` + `<ul class="pure-menu-list" id="` + uid + `">`
 				}
         GenSidenav(fullpath, streak+1) // Will not write anything if it's empty
         sideNav += "</ul>"
-
-	      if isEmpty { // If there are no subfolders, switch the chevron for the folder icon
-	          sideNav += `<style>#chevron_` + uid + `{background-image:url(/include/images/fallback/folder.png);background-size:70%;background-position:right center}</style>`
-	          console.Ilog("Working Dir is Empty. Removing Chevron")
-					}
 			} // END if p.IsDir()
 		} // END if !(StringInSlice)
 	} // END for _, p := range files
