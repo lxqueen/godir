@@ -318,7 +318,7 @@ func GenSidenav(path string, streak int) { // Streak needs to start at 0
 				} else {
 					sideNav += `<li class="pure-menu-item"><div class="side-checkbox"><input type="checkbox" id="collapse_` + uid + `"/><label class="list-collapsed-icon" for="collapse_` + uid + `" id="chevron_` + uid + `"></label></div><div class="side-content" id="a1"><a href="$root-step$/` + fullpath + `" class="pure-menu-link">` + p.Name() + `</a></div>` + `<ul class="pure-menu-list" id="` + uid + `">`
 				}
-        GenSidenav(fullpath, streak+1) // Will not write anything if it's empty
+        GenSidenav(path + "/" + p.Name(), streak+1) // Will not write anything if it's empty
         sideNav += "</ul>"
 			} // END if p.IsDir()
 		} // END if !(StringInSlice)
