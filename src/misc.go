@@ -316,9 +316,9 @@ func GenSidenav(path string, streak int) { // Streak needs to start at 0
 				)
 				// if is not empty
 				if !isEmpty {
-					sideNav += `<li class="pure-menu-item has-children"><div class="side-checkbox"><input type="checkbox" onclick="dropdown(this)" id="collapse_` + uid + `"/><label class="list-collapsed-icon" for="collapse_` + uid + `" id="chevron_` + uid + `"></label></div><div class="side-content" id="a1"><a href="$root-step$/` + fullpath + `" class="pure-menu-link">` + p.Name() + `</a></div>` + `<ul class="pure-menu-list"></ul>` + `<ul class="pure-menu-list default-hidden" id="` + uid + `">`
+					sideNav += `<li class="pure-menu-item has-children"><label><input type="checkbox" onclick="dropdown(this)" id="collapse_` + uid + `"/></label><a href="$root-step$/` + fullpath + `" class="pure-menu-link">` + p.Name() + `</a>` + `<ul class="pure-menu-list"></ul>` + `<ul class="pure-menu-list default-hidden" id="` + uid + `">`
 				} else {
-					sideNav += `<li class="pure-menu-item"><div class="side-checkbox"><input type="checkbox" id="collapse_` + uid + `"/><label class="list-collapsed-icon" for="collapse_` + uid + `" id="chevron_` + uid + `"></label></div><div class="side-content" id="a1"><a href="$root-step$/` + fullpath + `" class="pure-menu-link">` + p.Name() + `</a></div>` + `<ul class="pure-menu-list" id="` + uid + `">`
+					sideNav += `<li class="pure-menu-item"><label><input type="checkbox" id="collapse_` + uid + `"/></label><a href="$root-step$/` + fullpath + `" class="pure-menu-link">` + p.Name() + `</a>` + `<ul class="pure-menu-list" id="` + uid + `">`
 				}
         GenSidenav(path + "/" + p.Name(), streak+1) // Will not write anything if it's empty
         sideNav += "</ul>"
