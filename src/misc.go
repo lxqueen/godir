@@ -316,12 +316,12 @@ func GenSidenav(path string, streak int) { // Streak needs to start at 0
 				)
 				// if is not empty
 				if !isEmpty {
-					sideNav += `<li class="pure-menu-item has-children"><label><input type="checkbox" onclick="dropdown(this)" id="collapse_` + uid + `"/></label><a href="$root-step$/` + fullpath + `" class="pure-menu-link">` + p.Name() + `</a>` + `<ul class="pure-menu-list"></ul>` + `<ul class="pure-menu-list default-hidden" id="` + uid + `">`
+					sideNav += `<li class="pure-menu-item has-children"><label><input type="checkbox" onclick="dropdown(this)" id="collapse_` + uid + `"/></label><a href="$root-step$/` + fullpath + `" class="pure-menu-link">` + p.Name() + `</a>` + `<ul class="pure-menu-list default-hidden" id="` + uid + `">`
+	        GenSidenav(path + "/" + p.Name(), streak+1)
+	        sideNav += "</ul>"
 				} else {
-					sideNav += `<li class="pure-menu-item"><label><input type="checkbox" id="collapse_` + uid + `"/></label><a href="$root-step$/` + fullpath + `" class="pure-menu-link">` + p.Name() + `</a>` + `<ul class="pure-menu-list" id="` + uid + `">`
+					sideNav += `<li class="pure-menu-item"><label><input type="checkbox" id="collapse_` + uid + `"/></label><a href="$root-step$/` + fullpath + `" class="pure-menu-link">` + p.Name() + `</a>`
 				}
-        GenSidenav(path + "/" + p.Name(), streak+1) // Will not write anything if it's empty
-        sideNav += "</ul>"
 			} // END if p.IsDir()
 		} // END if !(StringInSlice)
 	} // END for _, p := range files
